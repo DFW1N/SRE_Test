@@ -96,6 +96,7 @@ cp -ru $assets_directory/* $build_directory/
 # Check the exit status of the cp command
 if [ $? -eq 0 ]; then
   echo "Files copied successfully."
+  echo
 else
   echo "No new files copied. Existing files are up to date."
 fi
