@@ -41,7 +41,6 @@ variable "resource_groups" {
   location                    = string
   purpose                     = string
   identifier                  = string
-  enable_lock                 = bool
   tags                        = map(string)
   }))
 }
