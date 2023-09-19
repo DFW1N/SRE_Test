@@ -7,6 +7,23 @@
 
 #!/bin/bash
 
+# Function to check if a command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# Check if Azure CLI is installed
+if ! command_exists az; then
+  echo "Error: Azure CLI is not installed. Please install it and make sure it's in your PATH."
+  exit 1
+fi
+
+# Check if Terraform is installed
+if ! command_exists terraform; then
+  echo "Error: Terraform is not installed. Please install it and make sure it's in your PATH."
+  exit 1
+fi
+
 # Check if the required environment variables are set
 if [ -z "$ARM_CLIENT_ID" ] || [ -z "$ARM_CLIENT_SECRET" ] || [ -z "$ARM_TENANT_ID" ] || [ -z "$ARM_SUBSCRIPTION_ID" ]; then
   echo "Error: Environment variables not set. Please ensure ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, and ARM_SUBSCRIPTION_ID are set."
