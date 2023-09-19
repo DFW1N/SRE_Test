@@ -26,3 +26,9 @@ Step 1:
 > Please keep in mind some of the links are top level domains that were used to pull multiple resources from this is subjective depending on the link reference.
 
 1. [Terraform AzureRM Registry](https://registry.terraform.io/providers/hashicorp/azurerm/latest)
+
+---
+
+###
+
+Author: Sacha Roussakis-Notter
