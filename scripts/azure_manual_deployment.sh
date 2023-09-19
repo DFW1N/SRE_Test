@@ -9,7 +9,7 @@
 
 # Check if an argument (target directory name) is provided
 if [ $# -ne 1 ]; then
-  echo "Usage: $0 <target_directory>"
+  echo "Error: Usage $0 <target_directory>. The argument must be either 'virtual_machine' or 'kubernetes_cluster'."
   exit 1
 fi
 
