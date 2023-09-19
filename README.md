@@ -51,6 +51,8 @@ Terraform:
     container_name: 'tfstate'
 ```
 
+Save the changes then continue to step 3.
+
 **Step 3:** Execute the bash script.
 
 ```bash
