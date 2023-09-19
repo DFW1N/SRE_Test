@@ -28,6 +28,9 @@ if [ $length -gt 3 ]; then
   exit 1
 fi
 
+# Convert input value to a variable for environment prefix.
+environment_prefix=$2
+
 # Function to check if a command exists
 command_exists() {
   command -v "$1" >/dev/null 2>&1
@@ -93,7 +96,7 @@ managed_by=$(yq eval '.Terraform.Backend.Modules.Variables.Tags.managedBy' $scri
 # Set the Date Created for the Infrastructure as a Default Tag
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
 
-# Add Error Handling
+# Added Error Handling
 
 if [ ! -d "$assets_directory" ]; then
   echo "Error: Source directory does not exist."
@@ -102,6 +105,7 @@ fi
 
 if [ ! -d "$build_directory" ]; then
   echo "Error: Build directory does not exist. Please check the name of the build directory."
+  exit 1
 fi
 
 # Perform the copy operation
@@ -139,7 +143,9 @@ terraform validate
 # Run Terraform Plan
 
 terraform plan \
--var="environment=$2" \
+-var="environment=$environment_prefix" \
 -var="managedBy=$managed_by" \
 -var="dateCreated=$dateTime" \
 -var-file=<(cat terraform.tfvars resources.tfvars)
+
+
