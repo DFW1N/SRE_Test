@@ -19,6 +19,26 @@ variable "resources" {
   default = null
 }
 
+###########################
+# COMMON MODULE VARIABLES #
+###########################
+
+variable "dateCreated" {
+  description = "The variables that are used and generated at run-time and passed to terraform."
+  default = null
+}
+
+variable "environment" {
+  description = "The environment prefix that is passed to terraform."
+  default = null
+}
+
+variable "managedBy" {
+  description = "The variable that assosicates who is managing this infrastructure stack."
+  default = null
+}
+
+
 ##################################
 # AZURE AUTHENTICATION VARIABLES #
 ##################################
