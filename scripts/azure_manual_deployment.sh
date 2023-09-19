@@ -150,3 +150,12 @@ terraform plan \
   -var-file=resources.tfvars \
   -out=$1-$environment_prefix-plan.out
 
+# Run Terraform Apply
+
+terraform apply \
+  -var="environment=$environment_prefix" \
+  -var="managedBy=$managed_by" \
+  -var="dateCreated=$dateTime" \
+  -var-file=terraform.tfvars \
+  -var-file=resources.tfvars \
+  -auto-approve
