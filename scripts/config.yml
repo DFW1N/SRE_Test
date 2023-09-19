@@ -9,7 +9,7 @@
 
 Terraform:
   Backend:
-    storage_account_name: 'azotcedevmgst001'
-    resource_group_name: 'az-o-tce-dev-rgr-sto-001'
+    storage_account_name: 'azrustdvsec68b3'
+    resource_group_name: 'azr-u-tc-dv-rg-tf-001'
     container_name: 'tfstate'
     
