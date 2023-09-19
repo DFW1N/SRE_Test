@@ -23,7 +23,3 @@ output "virtual_network_resource_group_names" {
   value       = flatten([for n in azurerm_virtual_network.virtual_network : n.resource_group_name])
   description = "Lists the outputs of the resource group names"
 }
-
-output "ddos_protection_plan_id" {
-    value = try(module.data_ddos_protection_plan.ddos_protection_plan_id, null)
-}

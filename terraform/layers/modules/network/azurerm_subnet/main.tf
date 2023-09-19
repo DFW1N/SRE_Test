@@ -5,13 +5,14 @@
 #                                                                            #
 # ===========================================================================#
 
-module "virtual_networks" {
+module "subnets" {
 depends_on                      = []
-    source                      = "../../../main/network/azurerm_virtual_network"
+    source                      = "../../../main/network/azurerm_subnet"
     resources                   = var.resources
     main                        = var.main
-    virtual_networks            = var.main.virtual_networks
-    dateCreated                 = var.dateCreated
+    special_subnets             = try(var.main.special_subnets, null)
+    subnets                     = var.main.subnets
     environment                 = var.environment
+    dateCreated                 = var.dateCreated
     managedBy                   = var.managedBy
 }

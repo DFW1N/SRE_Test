@@ -5,18 +5,18 @@
 #                                                                            #
 # ===========================================================================#
 
-output "virtual_network_ids" {
-    value = try(module.virtual_networks.virtual_network_ids, null)
+output "subnet_ids" {
+    value = try(module.subnets.subnet_ids, null)
 }
 
-output "virtual_network_names" {
-    value = try(module.virtual_networks.virtual_network_names, null)
+output "subnet_names" {
+    value = try(module.subnets.subnet_names, null)
 }
 
-output "virtual_network_resource_group_names" {
-    value = try(module.virtual_networks.virtual_network_resource_group_names, null)
+output "subnet_virtual_network_names" {
+    value = try(module.subnets.subnet_virtual_network_names, null)
 }
 
-output "virtual_network_ddos_protection_ids" {
-    value = try(module.virtual_networks.virtual_network_ddos_protection_ids, null)
+output "subnet_resource_group" {
+    value = try(module.subnets.subnet_resource_group_names, null)
 }

@@ -54,19 +54,3 @@ module "network_security_groups" {
     managedBy           = var.managedBy
     environment         = var.environment
 }
-
-################
-# ROUTE TABLES #
-################
-
-module "route_tables" {
-    depends_on          = [azurerm_subnet.subnets]
-    source              = "../azurerm_route_table"
-    resources           = var.resources
-    main                = var.main
-    subnets             = var.subnets
-    special_subnets     = var.special_subnets
-    environment         = var.environment
-    dateCreated         = var.dateCreated
-    managedBy           = var.managedBy
-}

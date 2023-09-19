@@ -5,12 +5,9 @@
 #                                                                            #
 # ===========================================================================#
 
-# I have created the outputs file additional as it can be used for inspec testing or pulling this value into other modules using outputs instead.
-
-output "public_ip_ids" {
-    value = try(module.public_ips.public_ip_ids, null)
-}
-
-output "public_ip_addresses" {
-    value = try(module.public_ips.public_ip_addresses, null)
+locals {
+    resource_group = format("%s-%s-%s-%s-%s", "${var.resources.resource_types.rgResourceType}", "${var.resource_group.purpose}", "${var.environment}", "${local.region_map[coalesce(var.resource_group.location)]}", "${var.resource_group.identifier}")
+    region_map = tomap({
+        for k, v in var.resources.azure_locations.regions : k => v
+    })
 }

@@ -26,3 +26,15 @@ depends_on                      = [module.resource_groups]
     environment                 = var.environment
     managedBy                   = var.managedBy
 }
+
+module "subnets" {
+depends_on                      = [module.virtual_networks]
+    source                      = "../../../main/network/azurerm_subnet"
+    resources                   = var.resources
+    main                        = var.main
+    special_subnets             = {}
+    subnets                     = var.main.subnets
+    environment                 = var.environment
+    dateCreated                 = var.dateCreated
+    managedBy                   = var.managedBy
+}

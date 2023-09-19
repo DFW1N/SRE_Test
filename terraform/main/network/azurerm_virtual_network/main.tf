@@ -11,7 +11,7 @@
 ####################
 
 resource "azurerm_virtual_network" "virtual_network" {
-  depends_on = [module.data_ddos_protection_plan]
+  depends_on = []
     for_each = var.virtual_networks
     name = format("%s-%s-%s-%s-%s", "${var.resources.resource_types.vntResourceType}", "${each.value.name.purpose}", "${var.environment}", "${local.region_map[coalesce(each.value.name.location)]}", "${each.value.name.identifier}")
     address_space = each.value.address_space

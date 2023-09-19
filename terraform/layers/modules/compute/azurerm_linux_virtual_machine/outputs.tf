@@ -5,9 +5,14 @@
 #                                                                            #
 # ===========================================================================#
 
-# This file should be used as an example on how you define the config in the top level .tfvars file on how to deploy a virtual network and relevant configuration attached to it.
-  
-main = {
+output "linux_virtual_machine_ids" {
+    value = try(module.linux_virtual_machine.linux_virtual_machine_ids, null)
+}
 
+output "linux_virtual_machine_names" {
+    value = try(module.linux_virtual_machine.linux_virtual_machine_names, null)
+}
 
-  }
+output "virtual_machine_resource_group_names" {
+    value = try(module.linux_virtual_machine.virtual_machine_resource_group_names, null)
+}
