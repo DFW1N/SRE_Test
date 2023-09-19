@@ -79,6 +79,9 @@ storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $script
 resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
 container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
 
+# Set the Date Created for the Infrastructure as a default tag
+dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
+
 # Add Error Handling
 
 if [ ! -d "$assets_directory" ]; then
