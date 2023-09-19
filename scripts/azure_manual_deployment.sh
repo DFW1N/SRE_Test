@@ -7,6 +7,18 @@
 
 #!/bin/bash
 
+# Check if an argument (target directory name) is provided
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <target_directory>"
+  exit 1
+fi
+
+# Check if the provided argument is valid ('virtual_machine' or 'kubernetes_cluster')
+if [ "$1" != "virtual_machine" ] && [ "$1" != "kubernetes_cluster" ]; then
+  echo "Error: Invalid argument. The argument must be either 'virtual_machine' or 'kubernetes_cluster'."
+  exit 1
+fi
+
 # Function to check if a command exists
 command_exists() {
   command -v "$1" >/dev/null 2>&1
