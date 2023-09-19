@@ -12,4 +12,8 @@ Terraform:
     storage_account_name: 'azrustdvsec68b3'
     resource_group_name: 'azr-u-tc-dv-rg-tf-001'
     container_name: 'tfstate'
+  Modules:
+    Variables:
+      Tags:
+        managedBy: 'Sacha Roussakis-Notter' # <--- This is top level variables that will be passed to all modules from the shell script or pipeline.
     
