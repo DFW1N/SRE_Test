@@ -10,7 +10,8 @@
 # Check if the correct number of arguments is provided
 if [ $# -ne 2 ]; then
   echo "Error: Usage $0 <target_directory> <environment_prefix>. The argument  <target_directory> must be either 'virtual_machine' or 'kubernetes_cluster' while the <environment_prefix> must be 3 letters."
-  echo "Usage: $0 Usage $0 <target_directory> <environment_prefix>"
+  echo
+  echo "Usage: $0 <target_directory> <environment_prefix>"
   exit 1
 fi
 
