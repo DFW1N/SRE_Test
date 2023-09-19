@@ -20,8 +20,6 @@ This repository has been created to deploy a Azure Kuberenetes Cluster on Azure 
 **Step 1:** Export Environment Variables (Linux Operating system)
 
 ```bash
-export TF_VAR_service_principal_id="YourServicePrincipalAppId"
-export TF_VAR_service_principal_secret="YourServicePrincipalSecret"
 export ARM_CLIENT_ID="$TF_VAR_service_principal_id"
 export ARM_CLIENT_SECRET="$TF_VAR_service_principal_secret"
 export ARM_SUBSCRIPTION_ID="YourSubscriptionId"
