@@ -85,6 +85,3 @@ if [ $? -ne 0 ]; then
   echo "Error: Copy operation failed."
   exit 1
 fi
-
-# Create a list of copied files
-copied_files=$(cd "$build_directory" && find . -type f -not -name "README.md" | sed 's|^\./||')
