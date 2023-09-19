@@ -5,9 +5,8 @@
 #                                                                            #
 # ===========================================================================#
 
-# This file should be used as an example on how you define the config in the top level .tfvars file on how to deploy a virtual network and relevant configuration attached to it.
-  
-main = {
-
-
-  }
+locals {
+    region_map = tomap({
+        for k, v in var.resources.azure_locations.regions : k => v
+    })
+}
