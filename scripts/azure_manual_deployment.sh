@@ -91,7 +91,7 @@ storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $script
 resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
 container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
 # Read values from config.yml using yq for common terraform module variables
-managed_by=$(yq eval '.Terraform.Backend.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
+managed_by=$(yq eval '.Terraform.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
 
 # Set the Date Created for the Infrastructure as a Default Tag
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
