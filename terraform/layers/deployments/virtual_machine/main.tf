@@ -7,7 +7,7 @@
 
 module "resource_groups" {
 depends_on                      = []
-    source                      = "../../../../main/base/azurerm_resource_group"
+    source                      = "../../../main/base/azurerm_resource_group"
     resources                   = var.resources
     resource_groups             = var.main.resource_groups
     dateCreated                 = var.dateCreated
