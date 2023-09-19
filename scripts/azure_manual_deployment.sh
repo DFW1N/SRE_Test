@@ -22,10 +22,10 @@ if [ "$1" != "virtual_machine" ] && [ "$1" != "kubernetes_cluster" ]; then
 fi
 
 # Check if the provided argument for environment prefix is exactly 3 letters
-if [[ ! "$2" =~ ^[a-zA-Z]{3}$ ]]; then
+if [ ! "$2" =~ ^[a-zA-Z]{3}$ ]; then
   echo "Error: Environment prefix must be exactly 3 letters."
   exit 1
-fi
+fis
 
 # Function to check if a command exists
 command_exists() {
