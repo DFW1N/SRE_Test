@@ -9,13 +9,28 @@
 
 # Check if an argument (target directory name) is provided
 if [ $# -ne 1 ]; then
-  echo "Error: Usage $0 <target_directory>. The argument must be either 'virtual_machine' or 'kubernetes_cluster'."
+  echo "Error: Usage $0 <target_directory> <environment_prefix>. The argument  <target_directory> must be either 'virtual_machine' or 'kubernetes_cluster' while the <environment_prefix> must be 3 letters."
+  echo "Usage: $0 Usage $0 <target_directory> <environment_prefix>"
+  exit 1
+fi
+
+# Check if the correct number of arguments is provided
+if [ $# -ne 2 ]; then
+  echo "Error: Usage $0 <target_directory> <environment_prefix>. The argument  <target_directory> must be either 'virtual_machine' or 'kubernetes_cluster' while the <environment_prefix> must be 3 letters."
+  echo "Usage: $0 Usage $0 <target_directory> <environment_prefix>"
   exit 1
 fi
 
 # Check if the provided argument is valid ('virtual_machine' or 'kubernetes_cluster')
 if [ "$1" != "virtual_machine" ] && [ "$1" != "kubernetes_cluster" ]; then
   echo "Error: Invalid argument. The argument must be either 'virtual_machine' or 'kubernetes_cluster'."
+  exit 1
+fi
+
+# Check if the provided argument for environment prefix is exactly 3 letters
+environment_prefix="$2"
+if [[ ! "$environment_prefix" =~ ^[a-zA-Z]{3}$ ]]; then
+  echo "Error: Environment prefix must be exactly 3 letters."
   exit 1
 fi
 
@@ -78,8 +93,10 @@ build_directory="../terraform/layers/deployments/$1"
 storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
 resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
 container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
+# Read values from config.yml using yq for common terraform module variables
+managed_by=$(yq eval '.Terraform.Backend.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
 
-# Set the Date Created for the Infrastructure as a default tag
+# Set the Date Created for the Infrastructure as a Default Tag
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
 
 # Add Error Handling
@@ -124,3 +141,11 @@ terraform init \
 
 # Validate the terraform code
 terraform validate
+
+# Run Terraform Plan
+
+terraform plan \
+-var="environment=$2" \
+-var="managedBy=$managed_by" \
+-var="dateCreated=$dateTime" \
+-var-file=<(cat terraform.tfvars resources.tfvars)
