@@ -19,8 +19,7 @@ for_each = "${var.resource_groups}"
         ManagedBy = "${title(var.managedBy)}", 
         Owner = "${each.value.tags.owner}", 
         ProjectName = "${upper(var.resources.global_prefixes.general.projectName)}", 
-        ResourceType = "Resource Group", 
-        CostCentre = "${upper(var.resources.global_prefixes.general.costCentre)}"  }), var.tags,)
+        ResourceType = "Resource Group" }), var.tags,)
     lifecycle {
         ignore_changes = [tags]
     }
