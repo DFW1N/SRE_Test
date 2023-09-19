@@ -10,3 +10,5 @@ jenkins/
 gitlab/
 github/
 ```
+
+Since each DevOps platform has different tasks, jobs, stages use cases this directory structure is beneficial to implement early on in development.
