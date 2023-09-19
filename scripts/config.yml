@@ -5,6 +5,8 @@
 #                                                                            #
 # ===========================================================================#
 
+# This config file has been created so we can use YQ to set variables and pull them into the bash script without having to pass them as input parameters into the script.
+
 Terraform:
   Backend:
     storage_account_name: 'azotcedevmgst001'
