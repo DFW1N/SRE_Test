@@ -15,6 +15,8 @@ This repository has been created to deploy a Azure Kuberenetes Cluster on Azure 
 
 ## Deployment Options
 
+### Azure Service Princial - Bash Script
+
 1. Manual Deployment using Azure Service Principal
 
 **Step 1:** Export Environment Variables (Linux Operating system)
@@ -60,6 +62,10 @@ chmod 700 azure_manual_deployment.sh
 ./azure_manual_deployment.sh <input_value>
 ```
 > NOTE: When you run the shell script it will require you to input a required value that must be either `virtual_machine` or `kubernetes_cluster`.
+
+---
+
+### Azure DevOps Pipeline - Service Principal Authentication Method
 
 3. Azure DevOps Pipelines
 
