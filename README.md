@@ -37,9 +37,9 @@ git clone https://github.com/DFW1N/SRE_Test && cd SRE_Test/scripts
 
 ```bash
 chmod 700 azure_manual_deployment.sh
-./azure_manual_deployment.sh
+./azure_manual_deployment.sh <input_value>
 ```
-
+> NOTE: When you run the shell script it will require you to input a required value that must be either `virtual_machine` or `kubernetes_cluster`.
 
 3. Azure DevOps Pipelines
 
