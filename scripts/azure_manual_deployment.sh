@@ -78,7 +78,7 @@ if [ ! -d "$build_directory" ]; then
 fi
 
 # Perform the copy operation
-cp -r "$assets_directory"/* "$build_directory/"
+cp -r . "$assets_directory"/* "$build_directory/ --exclude="README.md"
 
 # Check the exit status of the cp command
 if [ $? -ne 0 ]; then
@@ -86,3 +86,9 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Create a list of copied files
+copied_files=$(cd "$build_directory" && find . -type f -not -name "README.md" | sed 's|^\./||')
+
+for file in $copied_files; do
+  rm -f "$build_directory/$file"
+done
