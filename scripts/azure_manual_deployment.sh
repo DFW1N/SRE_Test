@@ -25,7 +25,7 @@ fi
 if [ ! "$2" =~ ^[a-zA-Z]{3}$ ]; then
   echo "Error: Environment prefix must be exactly 3 letters."
   exit 1
-fis
+fi
 
 # Function to check if a command exists
 command_exists() {
