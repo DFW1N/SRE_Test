@@ -23,14 +23,9 @@ depends_on = [
     admin_username = var.virtual_machine_map.settings.username
     admin_password = "UN1IC0RNS@REC00L12345%"
     disable_password_authentication = lookup(var.virtual_machine_map, "use_ssh_authentication", false) != false ? true : false
-    proximity_placement_group_id = try(data.azurerm_proximity_placement_group.proximity_placement_group[0].id, null)
-    availability_set_id = try(data.azurerm_availability_set.availability_set[0].id, null)
-    capacity_reservation_group_id = lookup(var.virtual_machine_map, "availability_set", {}) == {} && var.virtual_machine_map.settings.attach_capacity_reservation_group == true && lookup(var.virtual_machine_map, "proximity_placement_group", {}) == {} ? try(one(module.capacity_reservation_groups[*].capacity_reservation_group_ids), null) : null
     vtpm_enabled = try(var.virtual_machine_map.settings.vtpm_enabled, false)
     patch_mode = try(var.virtual_machine_map.settings.patch_mode, "ImageDefault")
     provision_vm_agent = try(var.virtual_machine_map.settings.provision_vm_agent, false)
-    dedicated_host_group_id = lookup(var.virtual_machine_map, "dedicated_host", {}) == {} ? try(data.azurerm_dedicated_host_group.dedicated_host_group[0].id, null) : null
-    dedicated_host_id = lookup(var.virtual_machine_map, "dedicated_host_group", {}) == {} ? try(data.azurerm_dedicated_host.dedicated_host[0].id, null) : null
     priority = try(title(var.virtual_machine_map.settings.priority), title("Regular"))
     secure_boot_enabled = try(var.virtual_machine_map.settings.secure_boot_enabled, true)
     network_interface_ids = [module.network_interface.network_interface_ids,]
@@ -51,6 +46,21 @@ depends_on = [
         }
     }
 
+    os_disk {
+        name = format("%s-%s", "${var.resources.resource_types.dskResourceType}", "${local.virtual_machine_name}")
+        caching = try(var.virtual_machine_map.settings.os_disk_settings.caching, var.caching)
+        storage_account_type = try(var.virtual_machine_map.settings.os_disk_settings.storage_account_type, var.storage_account_type)
+        disk_size_gb = try(var.virtual_machine_map.settings.os_disk_settings.disk_size_gb, var.disk_size_gb)
+        write_accelerator_enabled = try(var.virtual_machine_map.settings.os_disk_settings.storage_account_type == "Premium_LRS" || var.storage_account_type == "Premium_LRS" && var.virtual_machine_map.settings.os_disk_settings.caching == "None" || var.caching == "None" ? var.virtual_machine_map.settings.os_disk_settings.write_accelerator_enabled : false, false)
+        dynamic "diff_disk_settings" {
+            for_each = lookup(var.virtual_machine_map.settings.os_disk_settings, "diff_disk_settings", {}) != {} ? [1] : []
+            content {
+                option = title("Local")
+                placement = try(var.virtual_machine_map.settings.os_disk_settings.diff_disk_settings.placement, var.placement)
+            }
+        }
+    }
+
     source_image_reference {
         publisher = var.os_settings.publisher
         offer = var.os_settings.offer
@@ -60,10 +70,6 @@ depends_on = [
 
     additional_capabilities {
         ultra_ssd_enabled = try(var.virtual_machine_map.settings.additional_capabilities.ultra_ssd_enabled, false)
-    }
-
-    boot_diagnostics {
-        storage_account_uri = try(data.azurerm_storage_account.storage_account[0].primary_blob_endpoint, null)
     }
 
     identity {

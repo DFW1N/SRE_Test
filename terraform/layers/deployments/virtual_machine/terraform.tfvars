@@ -21,16 +21,6 @@ main = {
                 role = "This resource group is the default config for the module when it is not edited."
             }
         }
-        
-        example_2 = {
-            location = "australiaeast"
-            purpose = "sre"
-            identifier = "demo2"
-            tags = {
-                owner = "sacha1777@hotmail.com"
-                role = "This resource group is the default config for the module when it is not edited."
-            }
-        }
     }
 
     virtual_networks = {
@@ -52,30 +42,12 @@ main = {
                 role = "This virtual network is the default configuration settings for this module."
             }
         }
-        virtual_network_2 = {
-            name = {
-                location = "australiaeast"
-                purpose = "sre"
-                identifier = "demo"
-            }
-            address_space = ["10.33.84.0/23"]
-            dns_servers = ["168.63.129.16"]
-            resource_group = {
-                location = "australiaeast"
-                purpose = "sre"
-                identifier = "demo2"
-            }
-            tags = {
-                owner = "sacha1777@hotmail.com"
-                role = "This virtual network is the default configuration settings for this module."
-            }
-        }
     }
 
     subnets = {
         subnet_1 = {
             name = {
-                purpose = "foo"
+                purpose = "sre"
                 identifier = "demo"
             }
             address_prefix = ["10.33.84.16/28"]
@@ -90,15 +62,74 @@ main = {
             }
             resource_group = {
                 location = "australiaeast"
-                purpose = "foo"
+                purpose = "sre"
                 identifier = "demo"
             }
             virtual_network = {
                 location = "australiaeast"
-                purpose = "foo"
+                purpose = "sre"
                 identifier = "demo"
             }
             routes = {}
+        }
+    }
+
+    virtual_machines = {
+        virtual_machine_1 = {
+            attach_public_ip = true
+            use_ssh_authentication = false
+            name = {
+                purpose = "sre"
+                identifier = "demo"
+            }
+            resource_group = {
+                purpose = "sre"
+                identifier = "demo"
+                location = "australiaeast"
+            }
+            subnet = {
+                name = {
+                    purpose = "sre"
+                    identifier = "demo"
+                }
+                resource_group = {
+                    purpose = "sre"
+                    identifier = "demo"
+                }
+                virtual_network = {
+                    purpose = "sre"
+                    identifier = "demo"
+                    location = "australiaeast"
+                }
+            }
+            ip_addresses = []
+            settings = {
+                username = "adminuser"
+                size = "Standard_D2_v3"
+                attach_capacity_reservation_group = false
+                secure_boot_enabled = true
+                vtpm_enabled = false
+                allow_extension_operations = true
+                patch_mode = "ImageDefault"
+                priority = "Regular"
+                provision_vm_agent = true
+
+                os_disk_settings = {
+                    caching = "ReadOnly"
+                    storage_account_type = "Standard_LRS"
+                    disk_size_gb = 64
+                    write_accelerator_enabled = false
+                    diff_disk_settings = {}
+                }
+
+                additional_capabilities = {
+                    ultra_ssd_enabled = false
+                }
+            }
+            tags = {
+                owner = "Sacha1777@hotmail.com"
+                role = "This virtual machine is the default configuration settings for this module."
+            }
         }
     }
 }
