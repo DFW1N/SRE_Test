@@ -36,6 +36,7 @@ git clone https://github.com/DFW1N/SRE_Test && cd SRE_Test/scripts
 **Step 3:** Execute the bash script.
 
 ```bash
+chmod 700 azure_manual_deployment.sh
 ./azure_manual_deployment.sh
 ```
 
