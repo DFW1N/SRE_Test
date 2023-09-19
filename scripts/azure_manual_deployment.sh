@@ -104,12 +104,15 @@ fi
 # Change to the target build directory
 cd $build_directory
 
+# Retrieve the access key (key1)
+access_key=$(az storage account keys list --resource-group $resource_group_name --account-name $storage_account_name --query '[0].value' --output tsv)
+
 # Run Terraform commands
 terraform init \
 -backend-config="resource_group_name=$resource_group_name" \
 -backend-config="storage_account_name=$storage_account_name" \
 -backend-config="container_name=$container_name" \
--backend-config="client_id=${ARM_CLIENT_ID}" \
+-backend-config="access_key=$access_key" \
 -backend-config="client_secret=$ARM_CLIENT_SECRET" \
 -backend-config="subscription_id=$ARM_SUBSCRIPTION_ID" \
 -backend-config="tenant_id=$ARM_TENANT_ID" \
