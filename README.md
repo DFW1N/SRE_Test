@@ -10,7 +10,23 @@ This repository has been created to deploy a Azure Kuberenetes Cluster on Azure 
 1. Create an auto scaling web server using a Virtual Machine in Azure with a `Hello World` webpage. 
 2. Use Terraform to deploy a Kubernetes cluster in Azure
 3. Use ansible utilizing playbooks to manually apply to all currently running virtual machines.
-   
+
+---
+
+## Deployment Options
+
+1. Manual Deployment using Azure Service Principal
+
+```bash
+
+``` 
+
+3. Azure DevOps Pipelines
+
+```bash
+
+```
+
 ---
 
 ## Deployment Process
