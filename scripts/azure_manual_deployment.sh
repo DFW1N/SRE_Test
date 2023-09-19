@@ -85,7 +85,7 @@ if [ ! -d "$build_directory" ]; then
 fi
 
 # Perform the copy operation
-cp -r . "$assets_directory"/* "$build_directory/ --exclude="README.md"
+cp -r . "$assets_directory"/* "$build_directory"/ --exclude="README.md"
 
 # Check the exit status of the cp command
 if [ $? -ne 0 ]; then
