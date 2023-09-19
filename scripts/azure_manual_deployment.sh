@@ -70,6 +70,9 @@ fi
 # Terraform assets directory.
 assets_directory="../terraform/layers/assets"
 
+# Script directory.
+scripts_directory="./"
+
 # Terraform build directory where the CLI will be executed from.
 build_directory="../terraform/layers/deployments/$1"
 
@@ -85,21 +88,22 @@ if [ ! -d "$build_directory" ]; then
 fi
 
 # Perform the copy operation
-cp -r $assets_directory/* $build_directory/
+cp -ru $assets_directory/* $build_directory/
 
 # Check the exit status of the cp command
-if [ $? -ne 0 ]; then
-  echo "Error: Copy operation failed."
-  exit 1
+if [ $? -eq 0 ]; then
+  echo "Files copied successfully."
+else
+  echo "No new files copied. Existing files are up to date."
 fi
+
+# Read values from config.yml using yq
+storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
+resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
+container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
 
 # Change to the target build directory
 cd $build_directory
-
-# Read values from config.yml using yq
-storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' config.yml)
-resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' config.yml)
-container_name=$(yq eval '.Terraform.Backend.container_name' config.yml)
 
 # Run Terraform commands
 terraform init \
