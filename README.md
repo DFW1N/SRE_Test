@@ -21,6 +21,20 @@ Step 1:
 
 ---
 
+## Directory Structure
+
+The repository has been broken down into directories with the following:
+
+```bash
+pipelines/
+terraform/
+   main/
+   layers/
+      assets/
+      modules/
+```
+---
+
 ### References:
 
 > Please keep in mind some of the links are top level domains that were used to pull multiple resources from this is subjective depending on the link reference.
