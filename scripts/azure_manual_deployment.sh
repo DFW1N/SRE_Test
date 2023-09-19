@@ -146,6 +146,7 @@ terraform plan \
   -var="environment=$environment_prefix" \
   -var="managedBy=$managed_by" \
   -var="dateCreated=$dateTime" \
-  -var-file=<(cat terraform.tfvars resources.tfvars) \
+  -var-file=terraform.tfvars \
+  -var-file=resources.tfvars \
   -out=$1-$environment_prefix-plan.out
 
