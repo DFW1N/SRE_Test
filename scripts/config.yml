@@ -1,0 +1,13 @@
+#============================================================================#
+#                                                                            #
+#                       Date Created: 19/09/2023                             #
+#                     Author: Sacha Roussakis-Notter                         #
+#                                                                            #
+# ===========================================================================#
+
+Terraform:
+  Backend:
+    storage_account_name: 'azotcedevmgst001'
+    resource_group_name: 'az-o-tce-dev-rgr-sto-001'
+    container_name: 'tfstate'
+    
