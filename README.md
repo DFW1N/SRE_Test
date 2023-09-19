@@ -17,9 +17,30 @@ This repository has been created to deploy a Azure Kuberenetes Cluster on Azure 
 
 1. Manual Deployment using Azure Service Principal
 
-```bash
+**Step 1:** Export Environment Variables (Linux Operating system)
 
+```bash
+export TF_VAR_service_principal_id="YourServicePrincipalAppId"
+export TF_VAR_service_principal_secret="YourServicePrincipalSecret"
+export ARM_CLIENT_ID="$TF_VAR_service_principal_id"
+export ARM_CLIENT_SECRET="$TF_VAR_service_principal_secret"
+export ARM_SUBSCRIPTION_ID="YourSubscriptionId"
+export ARM_TENANT_ID="YourAzureADTenantId"
 ``` 
+
+**Step 2:** Clone the repository locally.
+
+```bash
+git clone https://github.com/DFW1N/SRE_Test && cd SRE_Test/scripts
+```
+
+
+**Step 3:** Execute the bash script.
+
+```bash
+./azure_manual_deployment.sh
+```
+
 
 3. Azure DevOps Pipelines
 
