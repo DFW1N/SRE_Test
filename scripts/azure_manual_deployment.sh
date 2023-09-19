@@ -85,3 +85,20 @@ if [ $? -ne 0 ]; then
   echo "Error: Copy operation failed."
   exit 1
 fi
+
+# Change to the target build directory
+cd $build_directory
+
+# Run Terraform commands
+terraform init \
+-backend-config="resource_group_name=${{ parameters.storageResourceGroupName }}" \
+-backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
+-backend-config="container_name=tfstate" \
+-backend-config="client_secret=$ARM_CLIENT_ID" \
+-backend-config="subscription_id=$ARM_SUBSCRIPTION_ID" \
+-backend-config="tenant_id=$ARM_TENANT_ID" \
+-backend-config="key=terraform.tfstate" \
+-upgrade
+
+# Validate the terraform code
+terraform validate
