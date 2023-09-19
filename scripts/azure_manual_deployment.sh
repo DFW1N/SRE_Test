@@ -30,6 +30,13 @@ if ! command_exists az; then
   exit 1
 fi
 
+# Check if YQ is installed
+if ! command_exists yq; then
+  echo "Error: YQ is not installed. Please install it and make sure it's in your PATH."
+  echo "If you are using Ubuntu/Linux please run the command: sudo apt-get install yq to install."
+  exit 1
+fi
+
 # Check if Terraform is installed
 if ! command_exists terraform; then
   echo "Error: Terraform is not installed. Please install it and make sure it's in your PATH."
