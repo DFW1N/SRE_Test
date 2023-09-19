@@ -89,11 +89,16 @@ fi
 # Change to the target build directory
 cd $build_directory
 
+# Read values from config.yml using yq
+storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' config.yml)
+resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' config.yml)
+container_name=$(yq eval '.Terraform.Backend.container_name' config.yml)
+
 # Run Terraform commands
 terraform init \
--backend-config="resource_group_name=${{ parameters.storageResourceGroupName }}" \
--backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
--backend-config="container_name=tfstate" \
+-backend-config="resource_group_name=$resource_group_name" \
+-backend-config="storage_account_name=$storage_account_name" \
+-backend-config="container_name=$container_name" \
 -backend-config="client_secret=$ARM_CLIENT_ID" \
 -backend-config="subscription_id=$ARM_SUBSCRIPTION_ID" \
 -backend-config="tenant_id=$ARM_TENANT_ID" \
