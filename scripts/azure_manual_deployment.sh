@@ -69,12 +69,15 @@ fi
 
 # Terraform assets directory.
 assets_directory="../terraform/layers/assets"
-
 # Script directory.
-scripts_directory="./"
-
+scripts_directory="."
 # Terraform build directory where the CLI will be executed from.
 build_directory="../terraform/layers/deployments/$1"
+
+# Read values from config.yml using yq
+storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
+resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
+container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
 
 # Add Error Handling
 
@@ -97,11 +100,6 @@ else
   echo "No new files copied. Existing files are up to date."
 fi
 
-# Read values from config.yml using yq
-storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
-resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
-container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
-
 # Change to the target build directory
 cd $build_directory
 
@@ -113,7 +111,7 @@ terraform init \
 -backend-config="client_secret=$ARM_CLIENT_SECRET" \
 -backend-config="subscription_id=$ARM_SUBSCRIPTION_ID" \
 -backend-config="tenant_id=$ARM_TENANT_ID" \
--backend-config="key=terraform.tfstate" \
+-backend-config="key=$1/terraform.tfstate" \
 -upgrade
 
 # Validate the terraform code
