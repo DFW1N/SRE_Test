@@ -88,7 +88,3 @@ fi
 
 # Create a list of copied files
 copied_files=$(cd "$build_directory" && find . -type f -not -name "README.md" | sed 's|^\./||')
-
-for file in $copied_files; do
-  rm -f "$build_directory/$file"
-done
