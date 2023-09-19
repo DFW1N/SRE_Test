@@ -47,3 +47,30 @@ if [ $? -ne 0 ]; then
   echo "Error: Azure subscription set failed. Please check your subscription ID."
   exit 1
 fi
+
+# Terraform assets directory.
+assets_directory="../terraform/layers/assets"
+
+# Terraform build directory where the CLI will be executed from.
+build_directory="../terraform/layers/deployments/$1"
+
+# Add Error Handling
+
+if [ ! -d "$assets_directory" ]; then
+  echo "Error: Source directory does not exist."
+  exit 1
+fi
+
+if [ ! -d "$build_directory" ]; then
+  echo "Error: Build directory does not exist. Please check the name of the build directory."
+fi
+
+# Perform the copy operation
+cp -r "$assets_directory"/* "$build_directory/"
+
+# Check the exit status of the cp command
+if [ $? -ne 0 ]; then
+  echo "Error: Copy operation failed."
+  exit 1
+fi
+
