@@ -31,7 +31,25 @@ export ARM_TENANT_ID="YourAzureADTenantId"
 ```bash
 git clone https://github.com/DFW1N/SRE_Test && cd SRE_Test/scripts
 ```
+- Update Config for backend
 
+config.yml
+```bash
+#============================================================================#
+#                                                                            #
+#                       Date Created: 19/09/2023                             #
+#                     Author: Sacha Roussakis-Notter                         #
+#                                                                            #
+# ===========================================================================#
+
+# This config file has been created so we can use YQ to set variables and pull them into the bash script without having to pass them as input parameters into the script.
+
+Terraform:
+  Backend:
+    storage_account_name: 'target_storage_account_name'
+    resource_group_name: 'target_resource_group_name'
+    container_name: 'tfstate'
+```
 
 **Step 3:** Execute the bash script.
 
