@@ -1,3 +1,10 @@
+#============================================================================#
+#                                                                            #
+#                       Date Created: 19/09/2023                             #
+#                     Author: Sacha Roussakis-Notter                         #
+#                                                                            #
+# ===========================================================================#
+
 main = {
 
     #####################
@@ -6,9 +13,8 @@ main = {
 
     resource_groups = {
         example_1 = {
-            enable_lock = false
             location = "australiaeast"
-            purpose = "foo"
+            purpose = "sre"
             identifier = "demo"
             tags = {
                 owner = "sacha1777@hotmail.com"
@@ -17,10 +23,9 @@ main = {
         }
         
         example_2 = {
-            enable_lock = false
             location = "australiaeast"
-            purpose = "bar"
-            identifier = "demo"
+            purpose = "sre"
+            identifier = "demo2"
             tags = {
                 owner = "sacha1777@hotmail.com"
                 role = "This resource group is the default config for the module when it is not edited."
