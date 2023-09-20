@@ -141,13 +141,11 @@ export ARM_TENANT_ID="YourAzureADTenantId"
 
 ---
 
-###  **Step 2:** Clone the repository locally and change directory in `scripts/` this is required since the shell script has been written using relative directories.
+###  **Step 2:** Clone the repository locally and change directory in `scripts/` and edit the `config.yml` file this is required since the shell script has been written using relative directories.
 
 ```bash
 git clone https://github.com/DFW1N/SRE_Test.git && cd SRE_Test/scripts
 ```
-
----
 
 `config.yml`
 ```bash
