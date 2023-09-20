@@ -1,0 +1,33 @@
+---
+- name: Update Nginx HTML
+  hosts: all  # Replace with the name of your host group or VM name
+  become: yes
+  become_user: root  # Use 'root' or the appropriate user with sudo privileges
+
+  tasks:
+    - name: Install Nginx (if not already installed)
+      apt:
+        name: nginx
+        state: present  # Ensure Nginx is installed
+      when: ansible_os_family == 'Debian'  # Adjust for your Linux distribution
+
+    - name: Update Nginx HTML file
+      blockinfile:
+        path: /var/www/html/index.html
+        block: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Hello, World from Ansible</title>
+          </head>
+          <body>
+            <h1>Hello, World from Ansible</h1>
+          </body>
+          </html>
+      notify: Restart Nginx
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
