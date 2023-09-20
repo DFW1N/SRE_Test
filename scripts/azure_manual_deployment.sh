@@ -233,6 +233,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
           echo "============================================================"
           echo "= \033[1;37mPlease wait for VMSS to finish updating and go online... \033[0m="
           echo "============================================================"
+
           countdown() {
             local seconds="$1"
             while [ "$seconds" -gt 0 ]; do
@@ -249,7 +250,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
           htmlContent=$(curl -s $publicIpAddress)
           if echo "$htmlContent" | grep -q "Hello, World!"; then
               echo "================================================"
-              echo "  Nginx Server is Live at: \033[0;33mhttp://$publicIpAddress\033[0m"
+              echo "  \033[1;37mNginx Server is Live at: \033[0;33mhttp://$publicIpAddress\033[0m"
               echo "================================================"
           else
               echo "========================================================================================================"
