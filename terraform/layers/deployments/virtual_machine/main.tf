@@ -39,14 +39,15 @@ depends_on                      = [module.virtual_networks]
     managedBy                   = var.managedBy
 }
 
-module "linux_virtual_machine" {
+module "linux_virtual_machine_scale_set" {
 depends_on                  = [module.subnets]
-    source                  = "../../../main/compute/azurerm_linux_virtual_machine"
     count                   = 1
+    source                  = "../../../main/compute/azurerm_linux_virtual_machine_scale_set"
     resources               = var.resources
     main                    = var.main
     os_settings             = var.resources.virtual_machines.ubuntu
-    virtual_machine_map     = var.main.virtual_machines.virtual_machine_1
+    virtual_machine_map     = var.main.linux_virtual_machine_scale_sets.linux_scale_set_1
+    subnet                  = var.main.subnets.subnet_1
     virtual_machine_index   = "${format("%01s", count.index + 1)}"
     environment             = var.environment
     dateCreated             = var.dateCreated
