@@ -143,11 +143,18 @@ export ARM_TENANT_ID="YourAzureADTenantId"
 
 ###  **Step 2:** Clone the repository locally and change directory in `scripts/` and edit the `config.yml` file this is required since the shell script has been written using relative directories.
 
+**Clone the Repository**
 ```bash
 git clone https://github.com/DFW1N/SRE_Test.git && cd SRE_Test/scripts
 ```
 
-`config.yml`
+**Edit the Config File**
+```bash
+vi config.yml
+```
+> Remember to insert by pressing `a`, make the changes then `esc` then type `:wq` to exit if using `vi`. 
+
+**Example of:** `config.yml`
 ```bash
 # This config file has been created so we can use YQ to set variables and pull them into the bash script without having to pass them as input parameters into the script.
 Terraform:
@@ -159,7 +166,7 @@ Terraform:
 
 ---
 
-Save the changes in the directory `scripts/config.yml` then continue to step 3.
+Save the changes in the directory `scripts/config.yml` then continue to **step 3**.
 
 > NOTE: The script has been developed used relative directories so please execute the script while in the `scripts/` working directory.
 
