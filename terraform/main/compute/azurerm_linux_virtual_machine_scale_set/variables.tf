@@ -76,3 +76,10 @@ variable "tags" {
   type = map(string)
   default = {}
 }
+
+variable "ssh_public_key" {
+  description = "The ssh public key value that will be deployed ontop the scale set."
+  type = string
+  default = null
+  sensitive = true
+}

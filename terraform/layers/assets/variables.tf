@@ -70,3 +70,9 @@ variable "client_id" {
   description = "The service principal client id these variables are/should be overridden in the Azure DevOps pipelines"
   default = null
 }
+
+variable "ssh_public_key" {
+  description = "The ssh public key that will be deployed"
+  default = null
+  sensitive = true
+}

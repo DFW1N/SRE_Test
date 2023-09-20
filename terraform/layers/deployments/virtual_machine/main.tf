@@ -44,6 +44,7 @@ depends_on                  = [module.subnets]
     count                   = 1
     source                  = "../../../main/compute/azurerm_linux_virtual_machine_scale_set"
     resources               = var.resources
+    ssh_public_key          = var.ssh_public_key 
     main                    = var.main
     os_settings             = var.resources.virtual_machines.ubuntu
     virtual_machine_map     = var.main.linux_virtual_machine_scale_sets.linux_scale_set_1

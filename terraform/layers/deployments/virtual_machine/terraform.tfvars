@@ -57,7 +57,7 @@ main = {
             delegations = []
             network_security_group = {
                 enable_diagnostic_settings = false
-                nsg_inbound_rules = [ ["allow_http", "101", "Inbound", "Allow", "", "80", "*", ""], ["allow_https", "102", "Inbound", "Allow", "", "443", "*", ""] ]
+                nsg_inbound_rules = [ ["allow_http", "101", "Inbound", "Allow", "", "80", "*", ""], ["allow_https", "102", "Inbound", "Allow", "", "443", "*", ""], ["allow_ssh", "103", "Inbound", "Allow", "", "22", "*", ""] ]
                 nsg_outbound_rules = []
             }
             resource_group = {
@@ -136,6 +136,7 @@ main = {
     linux_virtual_machine_scale_sets = {
         linux_scale_set_1 = {
             attach_public_ip = true
+            use_ssh_authentication = true
             name = {
                 purpose = "sre"
                 identifier = "ubu"

@@ -23,7 +23,6 @@ depends_on              = []
     resource_name       = local.virtual_machine_scale_set_name
 }
 
-
 ###################################
 # LINUX VIRTUAL MACHINE SCALE SET #
 ###################################
@@ -36,23 +35,28 @@ depends_on = [module.public_ip_prefix]
     sku = var.virtual_machine_map.settings.size
     encryption_at_host_enabled = false
     instances = var.virtual_machine_map.settings.instances
-    disable_password_authentication = false
+    disable_password_authentication = lookup(var.virtual_machine_map, "use_ssh_authentication", false) != false ? true : false
     admin_username = var.virtual_machine_map.settings.username
-    admin_password = "Un1c0rns@reC0ol123%"
+    admin_password = null
+    zone_balance = true
+    zones = ["1", "2", "3"]
     custom_data = var.virtual_machine_map.cloudinit.enable == true ? base64encode(data.cloudinit_config.functions.rendered) : null
     tags = merge(tomap({ 
-        Environment = "${title(var.environment)}", 
-        ManagedBy = "${title(var.managedBy)}", 
-        DateCreated = "${var.dateCreated}", 
+        Environment = "${title(var.environment)}",
+        ManagedBy = "${title(var.managedBy)}",
+        DateCreated = "${var.dateCreated}",
         Role = "${title(var.virtual_machine_map.tags.role)}",
         Owner = "${title(var.virtual_machine_map.tags.owner)}",
         ResourceType = "Virtual Machine Scale Set",
         osType = "${var.os_settings.osType}"  }), var.tags,)
 
-#    admin_ssh_key {
-#        username = "adminuser"
-#        public_key = local.first_public_key
-#    }
+    dynamic "admin_ssh_key" {
+        for_each = lookup(var.virtual_machine_map, "use_ssh_authentication", false) != false ? [1] : []
+        content {
+            username = try(lookup(var.virtual_machine_map.settings, "username", "adminuser"), null)
+            public_key = var.ssh_public_key # <-- This can be pulled in from hashicorp vault or key vault.
+        }
+    }
 
     source_image_reference {
         publisher = var.os_settings.publisher

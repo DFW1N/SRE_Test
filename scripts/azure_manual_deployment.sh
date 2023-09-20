@@ -171,10 +171,21 @@ if [ $# -ge 3 ] ||  [ $# -ge 4 ] && { [ "$3" = "-destroy" ] || [ "$4" = "-destro
   fi
 fi
 
+ssh_key_file="$HOME/.ssh/azure"
+ssh_pub_key_file="$HOME/.ssh/azure.pub"
+
+if [ ! -f "$ssh_key_file" ] && [ ! -f "$ssh_pub_key_file" ]; then
+
+  ssh-keygen -m PEM -t rsa -b 2048 -f "$ssh_key_file" -N ""
+fi
+
+ssh_key=$(cat "$ssh_pub_key_file")
+
 terraform plan $deploy_suffix \
   -var="environment=$environment_prefix" \
   -var="managedBy=$managed_by" \
   -var="dateCreated=$dateTime" \
+  -var="ssh_public_key=$ssh_key" \
   -var-file=terraform.tfvars \
   -var-file=resources.tfvars \
   -out=$1-$environment_prefix-plan.out
@@ -190,6 +201,7 @@ if [ "$deploy_terraform_apply" = true ]; then
     -var="environment=$environment_prefix" \
     -var="managedBy=$managed_by" \
     -var="dateCreated=$dateTime" \
+    -var="ssh_public_key=$ssh_key" \
     -var-file=terraform.tfvars \
     -var-file=resources.tfvars \
     -auto-approve
@@ -274,6 +286,11 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
     echo "--------------------------------------------------------------------"
     echo "No resource groups containing VMSS found in your Azure subscription."
   fi
+
+  echo "================================================"
+  echo -e "  \033[1;37m SSH Server Information Login with\033[0m="
+  echo -e "  \033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m="
+  echo "================================================"
 
   echo "================================================"
   echo -e "  \033[1;37mVMSS search and public IP retrieval completed.\033[0m"
