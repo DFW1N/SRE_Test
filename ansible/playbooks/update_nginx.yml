@@ -1,15 +1,15 @@
 ---
 - name: Update Nginx HTML
-  hosts: all  # Replace with the name of your host group or VM name
+  hosts: all
   become: yes
-  become_user: root  # Use 'root' or the appropriate user with sudo privileges
+  become_user: root
 
   tasks:
     - name: Install Nginx (if not already installed)
       apt:
         name: nginx
-        state: present  # Ensure Nginx is installed
-      when: ansible_os_family == 'Debian'  # Adjust for your Linux distribution
+        state: present
+      when: ansible_os_family == 'Debian'
 
     - name: Update Nginx HTML file
       blockinfile:

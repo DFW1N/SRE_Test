@@ -34,5 +34,6 @@ override.tf.json
 terraform.rc
 terraform/main/compute/azurerm_linux_virtual_machine
 terraform/layers/modules/compute/azurerm_linux_virtual_machine
+terraform/main/network/azurerm_public_ip
 
 .vscode
