@@ -57,7 +57,7 @@ main = {
             delegations = []
             network_security_group = {
                 enable_diagnostic_settings = false
-                nsg_inbound_rules = [ ["allow_all", "101", "Inbound", "Allow", "", "*", "*", ""], ]
+                nsg_inbound_rules = [ ["allow_http", "101", "Inbound", "Allow", "", "80", "*", ""], ["allow_https", "102", "Inbound", "Allow", "", "443", "*", ""] ]
                 nsg_outbound_rules = []
             }
             resource_group = {
