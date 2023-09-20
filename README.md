@@ -124,7 +124,7 @@ The repository uses a `shell` script to automate everything therefore `Linux` is
 
 This section will cover the requirements for the manual deployment using an Azure Service Principal with the bash script.
 
-> NOTE: Please check you have reviewed the requires applications and Azure requirements for this script, the script will `exit` and tell you to install if you are missing any requirements.
+> NOTE: Please check you have reviewed the required applications and Azure requirements for this script, the script will `exit` and tell you to install if you are missing any requirements.
 
 ---
 
