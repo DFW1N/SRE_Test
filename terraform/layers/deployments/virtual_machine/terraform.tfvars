@@ -74,65 +74,6 @@ main = {
         }
     }
 
-    virtual_machines = {
-        virtual_machine_1 = {
-            attach_public_ip = true
-            use_ssh_authentication = false
-            name = {
-                purpose = "sre"
-                identifier = "demo"
-            }
-            resource_group = {
-                purpose = "sre"
-                identifier = "demo"
-                location = "australiaeast"
-            }
-            subnet = {
-                name = {
-                    purpose = "sre"
-                    identifier = "demo"
-                }
-                resource_group = {
-                    purpose = "sre"
-                    identifier = "demo"
-                }
-                virtual_network = {
-                    purpose = "sre"
-                    identifier = "demo"
-                    location = "australiaeast"
-                }
-            }
-            ip_addresses = []
-            settings = {
-                username = "adminuser"
-                size = "Standard_D2_v3"
-                attach_capacity_reservation_group = false
-                secure_boot_enabled = false
-                vtpm_enabled = false
-                allow_extension_operations = true
-                patch_mode = "ImageDefault"
-                priority = "Regular"
-                provision_vm_agent = true
-
-                os_disk_settings = {
-                    caching = "ReadOnly"
-                    storage_account_type = "Standard_LRS"
-                    disk_size_gb = 64
-                    write_accelerator_enabled = false
-                    diff_disk_settings = {}
-                }
-
-                additional_capabilities = {
-                    ultra_ssd_enabled = false
-                }
-            }
-            tags = {
-                owner = "Sacha1777@hotmail.com"
-                role = "This virtual machine is the default configuration settings for this module."
-            }
-        }
-    }
-
     linux_virtual_machine_scale_sets = {
         linux_scale_set_1 = {
             attach_public_ip = true
