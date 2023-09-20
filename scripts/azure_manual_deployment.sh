@@ -56,14 +56,14 @@ fi
 
 # Check if Terraform is installed
 if ! command_exists terraform; then
-  echo "--------------------------------------------------"
+  echo "\033[1;37m===========================================================================\033[0m"
   echo "Error: Terraform is not installed. Please install it and make sure it's in your PATH."
   exit 1
 fi
 
 # Check if the required environment variables are set
 if [ -z "$ARM_CLIENT_ID" ] || [ -z "$ARM_CLIENT_SECRET" ] || [ -z "$ARM_TENANT_ID" ] || [ -z "$ARM_SUBSCRIPTION_ID" ]; then
-  echo "--------------------------------------------------"
+  echo "\033[1;37m===========================================================================================================================\033[0m"
   echo "Error: Environment variables not set. Please ensure ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, and ARM_SUBSCRIPTION_ID are set."
   exit 1
 fi
@@ -82,7 +82,7 @@ az account set --subscription "$ARM_SUBSCRIPTION_ID"
 
 # Check the exit status of the az account set command
 if [ $? -ne 0 ]; then
-  echo "--------------------------------------------------"
+  echo "\033[1;37m==============================================================\033[0m"
   echo "Error: Azure subscription set failed. Please check your subscription ID."
   exit 1
 fi
@@ -107,14 +107,16 @@ dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
 # Added Error Handling
 
 if [ ! -d "$assets_directory" ]; then
-  echo "--------------------------------------------------"
+  echo "\033[1;37m=============================\033[0m"
   echo "Error: Source directory does not exist."
+  echo "\033[1;37m=============================\033[0m"
   exit 1
 fi
 
 if [ ! -d "$build_directory" ]; then
-  echo "--------------------------------------------------"
+  echo "\033[1;37m==========================================================================\033[0m"
   echo "Error: Build directory does not exist. Please check the name of the build directory."
+  echo "\033[1;37m==========================================================================\033[0m"
   exit 1
 fi
 
@@ -123,12 +125,15 @@ cp -ru $assets_directory/* $build_directory/
 
 # Check the exit status of the cp command
 if [ $? -eq 0 ]; then
-  echo "--------------------------------------------------"
-  echo "Files copied successfully."
+  echo
+  echo "\033[1;37m================================================\033[0m"
+  echo "\033[1;37mFiles copied successfully from assets directory.\033[0m"
+  echo "\033[1;37m================================================\033[0m"
   echo
 else
-  echo "--------------------------------------------------"
+  echo "\033[1;37m========================================\033[0m"
   echo "No new files copied. Existing files are up to date."
+  echo "\033[1;37m========================================\033[0m"
 fi
 
 # Change to the target build directory
@@ -273,4 +278,30 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
   echo "----------------------------------------------"
   echo "VMSS search and public IP retrieval completed."
   echo "----------------------------------------------"
+fi
+
+# Delete the copied asset files, and auto generated files from your local host since you will be pulling state from storage account.
+
+if [ -d "$build_directory/.terraform" ]; then
+  rm -rf "$build_directory/.terraform"
+fi
+
+if [ -f "$build_directory/.terraform.lock.hcl" ]; then
+  rm -f "$build_directory/.terraform.lock.hcl"
+fi
+
+if [ -f "$build_directory/provider.tf" ]; then
+  rm -f "$build_directory/provider.tf"
+fi
+
+if [ -f "$build_directory/variables.tf" ]; then
+  rm -f "$build_directory/variables.tf"
+fi
+
+if [ -f "$build_directory/resources.tfvars" ]; then
+  rm -f "$build_directory/resources.tfvars"
+fi
+
+if [ -f "$build_directory/$1-sbx-plan.out" ]; then
+  rm -f "$build_directory/$1-sbx-plan.out"
 fi
