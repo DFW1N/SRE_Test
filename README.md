@@ -2,7 +2,7 @@
 
 ## What this repository does
 
-This repository has been created to deploy a Azure Kuberenetes Cluster on Azure using an Bash/Shell script to automate the deployment.
+This repository has been created to deploy multiple resource types in Azure using an Bash/Shell script to automate the deployment. For a more detailed summary please review the `Summary` section below.
 
 ### **Summary:**
 
