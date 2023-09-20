@@ -11,7 +11,7 @@ if [ $# -lt 2 ]; then
   echo "--------------------------------------------------"
   echo "Error: Usage $0 <target_directory> <environment_prefix>. The argument <target_directory> must be either 'virtual_machine' or 'kubernetes_cluster' while the <environment_prefix> must be 3 letters."
   echo
-  echo "Usage: $0 <target_directory> <environment_prefix> [-plan]"
+  echo "Usage: $0 <target_directory> <environment_prefix> [-plan] [-destroy]"
   exit 1
 fi
 
@@ -38,6 +38,7 @@ command_exists() {
 if ! command_exists az; then
   echo "--------------------------------------------------"
   echo "Error: Azure CLI is not installed. Please install it and make sure it's in your PATH."
+  echo "If you are using Ubuntu/Linux please run the command: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash to install."
   exit 1
 fi
 
@@ -49,13 +50,13 @@ if ! command_exists yq; then
 fi
 
 if ! command_exists terraform; then
-  echo "\033[1;37m===========================================================================\033[0m"
+  echo -e "\033[1;37m===========================================================================\033[0m"
   echo "Error: Terraform is not installed. Please install it and make sure it's in your PATH."
   exit 1
 fi
 
 if [ -z "$ARM_CLIENT_ID" ] || [ -z "$ARM_CLIENT_SECRET" ] || [ -z "$ARM_TENANT_ID" ] || [ -z "$ARM_SUBSCRIPTION_ID" ]; then
-  echo "\033[1;37m===========================================================================================================================\033[0m"
+  echo -e "\033[1;37m===========================================================================================================================\033[0m"
   echo "Error: Environment variables not set. Please ensure ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, and ARM_SUBSCRIPTION_ID are set."
   exit 1
 fi
@@ -70,7 +71,7 @@ fi
 az account set --subscription "$ARM_SUBSCRIPTION_ID"
 
 if [ $? -ne 0 ]; then
-  echo "\033[1;37m==============================================================\033[0m"
+  echo -e "\033[1;37m==============================================================\033[0m"
   echo "Error: Azure subscription set failed. Please check your subscription ID."
   exit 1
 fi
@@ -99,16 +100,16 @@ managed_by=$(yq eval '.Terraform.Modules.Variables.Tags.managedBy' $scripts_dire
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
 
 if [ ! -d "$assets_directory" ]; then
-  echo "\033[1;37m=============================\033[0m"
+  echo -e "\033[1;37m=============================\033[0m"
   echo "Error: Source directory does not exist."
-  echo "\033[1;37m=============================\033[0m"
+  echo -e "\033[1;37m=============================\033[0m"
   exit 1
 fi
 
 if [ ! -d "$build_directory" ]; then
-  echo "\033[1;37m==========================================================================\033[0m"
+  echo -e "\033[1;37m==========================================================================\033[0m"
   echo "Error: Build directory does not exist. Please check the name of the build directory."
-  echo "\033[1;37m==========================================================================\033[0m"
+  echo -e "\033[1;37m==========================================================================\033[0m"
   exit 1
 fi
 
@@ -116,19 +117,20 @@ cp -ru $assets_directory/* $build_directory/
 
 if [ $? -eq 0 ]; then
   echo
-  echo "\033[1;37m================================================\033[0m"
-  echo "\033[1;37mFiles copied successfully from assets directory.\033[0m"
-  echo "\033[1;37m================================================\033[0m"
+  echo -e "\033[1;37m================================================\033[0m"
+  echo -e "\033[1;37mFiles copied successfully from assets directory.\033[0m"
+  echo -e "\033[1;37m================================================\033[0m"
   echo
 else
-  echo "\033[1;37m========================================\033[0m"
+  echo -e "\033[1;37m========================================\033[0m"
   echo "No new files copied. Existing files are up to date."
-  echo "\033[1;37m========================================\033[0m"
+  echo -e "\033[1;37m========================================\033[0m"
 fi
 
 cd $build_directory
 
 deploy_terraform_apply=true
+destroy_terraform=false
 
 for arg in "$3"; do
   case $arg in
@@ -161,7 +163,15 @@ fi
 
 terraform validate
 
-terraform plan \
+deploy_suffix=""
+if [ $# -ge 3 ] ||  [ $# -ge 4 ] && { [ "$3" = "-destroy" ] || [ "$4" = "-destroy" ]; }; then
+  destroy_terraform=true
+  if [ "$destroy_terraform" = true ]; then
+  deploy_suffix="-destroy"
+  fi
+fi
+
+terraform plan $deploy_suffix \
   -var="environment=$environment_prefix" \
   -var="managedBy=$managed_by" \
   -var="dateCreated=$dateTime" \
@@ -176,7 +186,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ "$deploy_terraform_apply" = true ]; then
-  terraform apply \
+  terraform apply $deploy_suffix \
     -var="environment=$environment_prefix" \
     -var="managedBy=$managed_by" \
     -var="dateCreated=$dateTime" \
@@ -194,11 +204,11 @@ else
   echo "Terraform apply is skipped as -plan option was provided."
 fi
 
-if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
+if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "virtual_machine" ]; then
 
   echo
   echo "=================================================================="
-  echo "= \033[1;37mIterating through resource groups to find VMSS. Please wait... \033[0m="
+  echo -e "= \033[1;37mIterating through resource groups to find VMSS. Please wait... \033[0m="
   echo "=================================================================="
 
   resourceGroups=$(az group list --query "[].name" --output tsv)
@@ -217,7 +227,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
     echo "======= \033[1;37mResource Groups Containing VMSS\033[0m========="
     for rg in $resourceGroupsContainingVMSS; do
       echo "================================================"
-      echo "              \033[0;33m$rg\033[0m"
+      echo -e "              \033[0;33m$rg\033[0m"
       echo "================================================"
 
       vmssList=$(az vmss list --resource-group $rg --query "[].{Name:name}" --output tsv)
@@ -231,18 +241,18 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
           # Added this count down to ensure the Nginx server has been updated and applied to the VMSS to ensure the webserver is running.
           echo
           echo "============================================================"
-          echo "= \033[1;37mPlease wait for VMSS to finish updating and go online... \033[0m="
+          echo -e "= \033[1;37mPlease wait for VMSS to finish updating and go online... \033[0m="
           echo "============================================================"
 
           countdown() {
             local seconds="$1"
             while [ "$seconds" -gt 0 ]; do
-              echo "\033[1;37mCountdown: \033[0;33m$seconds \033[1;37mseconds\033[0K\r"
+              echo -e "\033[1;37mCountdown: \033[0;33m$seconds \033[1;37mseconds\033[0K\r"
               sleep 1
               seconds=$((seconds - 1))
             done
             
-            echo "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
+            echo -e "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
           }
 
           countdown 30
@@ -250,11 +260,11 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
           htmlContent=$(curl -s $publicIpAddress)
           if echo "$htmlContent" | grep -q "Hello, World!"; then
               echo "================================================"
-              echo "  \033[1;37mNginx Server is Live at: \033[0;33mhttp://$publicIpAddress\033[0m"
+              echo -e "  \033[1;37mNginx Server is Live at: \033[0;33mhttp://$publicIpAddress\033[0m"
               echo "================================================"
           else
               echo "========================================================================================================"
-              echo "The \033[0;33m$vmssName\033[0m with the instance name of \033[0;33m$instanceName\033[0m with an instance id of \033[0;33m$instanceId\033[0m. Is not hosting an Nginx Server."
+              echo -e "The \033[0;33m$vmssName\033[0m with the instance name of \033[0;33m$instanceName\033[0m with an instance id of \033[0;33m$instanceId\033[0m. Is not hosting an Nginx Server."
               echo "========================================================================================================"
           fi
         done
@@ -266,7 +276,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
   fi
 
   echo "================================================"
-  echo "  \033[1;37mVMSS search and public IP retrieval completed.\033[0m"
+  echo -e "  \033[1;37mVMSS search and public IP retrieval completed.\033[0m"
   echo "================================================"
 
   # Delete the copied asset files, and auto generated files from your local host since you will be pulling state from storage account.
@@ -277,5 +287,4 @@ if [ "$deploy_terraform_apply" = true ] && [ "$1" = "virtual_machine" ]; then
   rm -f "variables.tf"
   rm -f "resources.tfvars"
   rm -f "$1-sbx-plan.out"
-
 fi
