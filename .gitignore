@@ -32,5 +32,7 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+terraform/main/compute/azurerm_linux_virtual_machine
+terraform/layers/modules/compute/azurerm_linux_virtual_machine
 
 .vscode
