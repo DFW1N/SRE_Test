@@ -289,11 +289,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
 
   echo "================================================"
   echo -e "  \033[1;37m SSH Server Information Login with\033[0m="
-  echo -e "  \033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m="
-  echo "================================================"
-
-  echo "================================================"
-  echo -e "  \033[1;37mVMSS search and public IP retrieval completed.\033[0m"
+  echo -e "  \033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m"
   echo "================================================"
 
   # Delete the copied asset files, and auto generated files from your local host since you will be pulling state from storage account.
@@ -304,4 +300,27 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   rm -f "variables.tf"
   rm -f "resources.tfvars"
   rm -f "$1-sbx-plan.out"
+
+  ######################################
+  # Ansible Section of the Bash Script #
+  ######################################
+
+  read -p "Do you want to update nginx webpage with an Ansible playbook (y/n)? " answer
+
+  # Check if the user's response is not one of the accepted values
+  if [ "$answer" != "yes" ] && [ "$answer" != "y" ] && [ "$answer" != "ye" ] && [ "$answer" != "ya" ]; then
+    echo "Script has been completed."
+    exit 1
+  fi
+
+  echo "================================================"
+  echo -e "  \033[1;37mPreparing Hosts File for: \033[0;33m$publicIpAddress\033[0m"
+  echo "================================================"
+
+  hosts_file="../../../../ansible/inventory/hosts.ini"
+  sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
+  # Check if [azure_vm] exists in the file
+  cd ../../../../ansible/playbooks
+  ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
+
 fi

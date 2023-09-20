@@ -18,7 +18,6 @@ depends_on                      = []
 module "virtual_networks" {
 depends_on                      = [module.resource_groups]
     source                      = "../../../main/network/azurerm_virtual_network"
-    count                       = 1
     resources                   = var.resources
     main                        = var.main
     virtual_networks            = var.main.virtual_networks
@@ -37,18 +36,4 @@ depends_on                      = [module.virtual_networks]
     environment                 = var.environment
     dateCreated                 = var.dateCreated
     managedBy                   = var.managedBy
-}
-
-module "linux_virtual_machine" {
-depends_on                  = [module.subnets]
-    source                  = "../../../main/compute/azurerm_linux_virtual_machine"
-    count                   = 1
-    resources               = var.resources
-    main                    = var.main
-    os_settings             = var.resources.virtual_machines.ubuntu
-    virtual_machine_map     = var.main.virtual_machines.virtual_machine_1
-    virtual_machine_index   = "${format("%01s", count.index + 1)}"
-    environment             = var.environment
-    dateCreated             = var.dateCreated
-    managedBy               = var.managedBy
 }
