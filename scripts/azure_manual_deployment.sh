@@ -224,7 +224,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
 
   if [ -n "$resourceGroupsContainingVMSS" ]; then
     echo
-    echo "======= \033[1;37mResource Groups Containing VMSS\033[0m========="
+    echo -e "======= \033[1;37mResource Groups Containing VMSS\033[0m========="
     for rg in $resourceGroupsContainingVMSS; do
       echo "================================================"
       echo -e "              \033[0;33m$rg\033[0m"
