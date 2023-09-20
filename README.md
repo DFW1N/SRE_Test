@@ -55,13 +55,17 @@ Terraform:
 
 Save the changes then continue to step 3.
 
+> NOTE: The script has been developed used relative directories so please execute the script while in the `scripts/` working directory.
+
 **Step 3:** Execute the bash script.
 
 ```bash
 chmod 700 azure_manual_deployment.sh
-./azure_manual_deployment.sh <input_value>
+./azure_manual_deployment.sh <input_value> <environment_prefix> (Optional: -plan)
 ```
 > NOTE: When you run the shell script it will require you to input a required value that must be either `virtual_machine` or `kubernetes_cluster`.
+
+You can add `-plan` to check a terraform plan before applying it.
 
 ---
 
