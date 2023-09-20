@@ -114,9 +114,15 @@ git --version
 The repository uses a `shell` script to automate everything therefore `Linux` is required to be able to run the bash script successfully. The reason `Linux` was chosen is because majority of functions used within the bash script is installed by default in most `Linux` operating systems.
 
 ### **Tested On**
-✅ Successful Deployment: **Ubuntu 18.04**
 
-✅ Successful Deployment: **Ubuntu 22.04**
+`Operating Systems:`
+
+- ✅ Successful Deployment: **Ubuntu 18.04**
+- ✅ Successful Deployment: **Ubuntu 22.04**
+
+`Unix Shell`
+- ✅ Successful Deployment: **Zsh**
+- ✅ Successful Deployment: **Bash**
 
 ## **Deployment Guide**
 
