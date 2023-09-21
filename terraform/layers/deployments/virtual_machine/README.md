@@ -1,4 +1,4 @@
-## Virtual Machine Deployment
+## Virtual Machine Scale Set Deployment
 
 This directory will contain the models required to build a virtual machine that hosts a auto scaling web server.
 
@@ -14,7 +14,7 @@ This deployment deploys the following resources
 2 network rules to allow http and https
 1 public ip address
 1 network interface
-1 ubuntu linux virtual machine
+1 ubuntu linux virtual machine scale set
 ```
 
 It will automatically deploy everything in sequence and is easily customizable using the `config/` directory.

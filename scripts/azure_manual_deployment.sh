@@ -39,6 +39,7 @@ if ! command_exists az; then
   echo "--------------------------------------------------"
   echo "Error: Azure CLI is not installed. Please install it and make sure it's in your PATH."
   echo "If you are using Ubuntu/Linux please run the command: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash to install."
+  echo "Please review the repository root README.md for install guidance."
   exit 1
 fi
 
@@ -46,12 +47,14 @@ if ! command_exists yq; then
   echo "--------------------------------------------------"
   echo "Error: YQ is not installed. Please install it and make sure it's in your PATH."
   echo "If you are using Ubuntu/Linux please run the command: sudo apt-get install yq to install."
+  echo "Please review the repository root README.md for install guidance."
   exit 1
 fi
 
 if ! command_exists terraform; then
   echo -e "\033[1;37m===========================================================================\033[0m"
   echo "Error: Terraform is not installed. Please install it and make sure it's in your PATH."
+  echo "Please review the repository root README.md for install guidance."
   exit 1
 fi
 
@@ -218,6 +221,13 @@ fi
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "virtual_machine" ]; then
 
+  if ! command_exists ansible; then
+    echo -e "\033[1;37m===========================================================================\033[0m"
+    echo "Error: Ansible is not installed. Please install it and make sure it's in your PATH."
+    echo "Please review the repository root README.md for install guidance."
+    exit 1
+  fi
+
   echo
   echo "=================================================================="
   echo -e "= \033[1;37mIterating through resource groups to find VMSS. Please wait... \033[0m="
@@ -318,7 +328,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   echo "================================================"
 
   hosts_file="../../../../ansible/inventory/hosts.ini"
-  sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
+  sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=$HOME/.ssh/azure" $hosts_file
   # Check if [azure_vm] exists in the file
   cd ../../../../ansible/playbooks
   ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
@@ -330,6 +340,11 @@ fi
 #########################################
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "kubernetes_cluster" ]; then
+
+  if ! command -v kubectl &> /dev/null; then
+      echo "Error: 'kubectl' command not found. Installing kubectl."
+      az aks install-cli
+  fi
 
   echo "==============================================================="
   echo -e "  \033[1;37mPreparing to Deploy the Kubernetes Manifest File\033[0m"
@@ -351,12 +366,6 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   fi
 
   rm output.txt
-
-  if ! command -v kubectl &> /dev/null; then
-      echo "Error: 'kubectl' command not found. Installing kubectl."
-      az aks install-cli
-  fi
-
 
   az aks get-credentials --resource-group rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier --name akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier
 
