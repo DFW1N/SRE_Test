@@ -16,10 +16,6 @@ assets_directory="../terraform/layers/assets"
 scripts_directory="."
 build_directory="../terraform/layers/deployments/$1"
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
-storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
-resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
-container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
-managed_by=$(yq eval '.Terraform.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
 
 ###########################
 # START OF BASH FUNCTIONS #
@@ -58,8 +54,42 @@ delete_deployment_files() {
   rm -f "provider.tf"
   rm -f "variables.tf"
   rm -f "resources.tfvars"
-  rm -f "$1-$environment_prefix-plan.out"
 }
+
+dynamically_generate_kubernetes_cluster_resource_values() {
+  output=$(awk -v RS= -v block="kubernetes_cluster_1" '$0 ~ block' "terraform.tfvars" | \
+    awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > output.txt)
+  
+  aks_name_purpose=$(cat output.txt | sed -n '1p')
+  aks_name_identifier=$(cat output.txt | sed -n '2p')
+  aks_rg_purpose=$(cat output.txt | sed -n '3p')
+  aks_rg_identifier=$(cat output.txt | sed -n '4p')
+}
+
+dynamically_generate_virtual_machine_resource_values() {
+  output=$(awk -v RS= -v block="linux_scale_set_1" '$0 ~ block' "terraform.tfvars" | \
+    awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > vmss_name_output.txt)
+
+  vmss_name_purpose=$(cat vmss_name_output.txt | sed -n '1p')
+  vmss_name_identifier=$(cat vmss_name_output.txt | sed -n '2p')
+
+  rm vmss_name_output.txt
+
+  resource_group_output=$(awk -v RS= -v block="linux_scale_set_1" '$0 ~ block' "terraform.tfvars" | \
+      awk '/resource_group = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+      sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > resource_group_output.txt)
+
+  vmss_rg_location=$(cat resource_group_output.txt | sed -n '1p')
+  vmss_rg_purpose=$(cat resource_group_output.txt | sed -n '2p')
+  vmss_rg_identifier=$(cat resource_group_output.txt | sed -n '3p')
+
+  vmss_rg_name="rg-$vmss_rg_purpose-$environment_prefix-aue-$vmss_rg_identifier"
+
+  rm resource_group_output.txt
+}
+
 
 #########################
 # END OF BASH FUNCTIONS #
@@ -93,21 +123,22 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-if ! command_exists az; then
-  my_echo "\033[1;37m============================================================================================================================\033[0m"
-  my_echo "\033[1;37m=          Error: Azure CLI is not installed. Please install it and make sure it's in your PATH.                           =\033[0m"
-  my_echo "\033[1;37m= If you are using Ubuntu/Linux please run the command: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash to install. =\033[0m"
-  my_echo "\033[1;37m=                Please review the repository root README.md for install guidance.                                         =\033[0m"
-  my_echo "\033[1;37m============================================================================================================================\033[0m"
-  exit 1
-fi
-
 if ! command_exists yq; then
   my_echo "\033[1;37m=============================================================================================\033[0m"
   my_echo "\033[1;37m=      Error: YQ is not installed. Please install it and make sure it's in your PATH.       =\033[0m"
   my_echo "\033[1;37m= If you are using Ubuntu/Linux please run the command: sudo apt-get install yq to install. =\033[0m"
   my_echo "\033[1;37m=            Please review the repository root README.md for install guidance.              =\033[0m"
   my_echo "\033[1;37m=============================================================================================\033[0m"
+  exit 1
+fi
+
+
+if ! command_exists az; then
+  my_echo "\033[1;37m============================================================================================================================\033[0m"
+  my_echo "\033[1;37m=          Error: Azure CLI is not installed. Please install it and make sure it's in your PATH.                           =\033[0m"
+  my_echo "\033[1;37m= If you are using Ubuntu/Linux please run the command: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash to install. =\033[0m"
+  my_echo "\033[1;37m=                Please review the repository root README.md for install guidance.                                         =\033[0m"
+  my_echo "\033[1;37m============================================================================================================================\033[0m"
   exit 1
 fi
 
@@ -171,6 +202,12 @@ else
   my_echo "\033[1;37m= No new files copied. Existing files are up to date. =\033[0m"
   my_echo "\033[1;37m=======================================================\033[0m"
 fi
+
+storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
+resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
+container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
+managed_by=$(yq eval '.Terraform.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
+
 
 cd $build_directory
 
@@ -265,9 +302,8 @@ else
   my_echo "\033[1;37m============================================================\033[0m"
 fi
 
-if "$destroy_terraform" = true ]; then
-  delete_deployment_files
-fi
+rm -f "$1-$environment_prefix-plan.out"
+delete_deployment_files
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "virtual_machine" ]; then
 
@@ -280,73 +316,53 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   fi
 
   echo
-  my_echo "\033[1;37m==================================================================\033[0m"
-  my_echo "\033[1;37m= Iterating through resource groups to find VMSS. Please wait... =\033[0m"
-  my_echo "\033[1;37m==================================================================\033[0m"
 
-  resourceGroups=$(az group list --query "[].name" --output tsv)
-  resourceGroupsContainingVMSS=""
+  dynamically_generate_virtual_machine_resource_values
 
-  for rg in $resourceGroups; do
-    vmssList=$(az vmss list --resource-group $rg --query "length(@)")
+  vmssList=$(az vmss list --resource-group $vmss_rg_name --query "[].{Name:name}" --output tsv)
+
+  my_echo "\033[1;37m============================================\033[0m"
+  my_echo "\033[1;37m= Searching for vmsss name, please wait... =\033[0m"
+  my_echo "\033[1;37m============================================\033[0m"
+  my_echo "\033[1;37m               \033[0;33m$vmssList                   \033[0m"
+  for vmssName in $vmssList; do
+    vmssInstances=$(az vmss list-instances --resource-group $vmss_rg_name --name $vmssName --query "[].{Name:name}" --output tsv)
+    for instanceInfo in $vmssInstances; do
+      instanceName="${instanceInfo%_*}"
+      instanceId="${instanceInfo##*_}"
+      publicIpAddress=$(az vmss list-instance-public-ips --resource-group $vmss_rg_name --name $vmssName --query "[?contains(id, '/$instanceId/')].ipAddress" --output tsv)
       
-    if [ "$vmssList" -gt 0 ]; then
-      resourceGroupsContainingVMSS="$resourceGroupsContainingVMSS $rg"
-    fi
-  done
+      # Added this count down to ensure the Nginx server has been updated and applied to the VMSS to ensure the webserver is running.
+      echo
+      my_echo "\033[1;37m============================================================\033[0m"
+      my_echo "\033[1;37m= Please wait for VMSS to finish updating and go online... =\033[0m"
+      my_echo "\033[1;37m============================================================\033[0m"
 
-  if [ -n "$resourceGroupsContainingVMSS" ]; then
-    echo
-    my_echo "\033[1;37m===================================\033[0m"
-    my_echo "\033[1;37m= Resource Groups Containing VMSS =\033[0m"
-    for rg in $resourceGroupsContainingVMSS; do
-      my_echo "\033[1;37m================================================\033[0m"
-      my_echo "\033[1;37m=            \033[0;33m$rg\033[0m              =\033[0m"
-      my_echo "\033[1;37m================================================\033[0m"
+      countdown 15
+      
+      htmlContent=$(curl -k https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
+      if echo "$htmlContent" | grep -q "Hello, World!"; then
+          my_echo "\033[1;37m==================================================\033[0m"
+          my_echo "\033[1;37m| Nginx Server is Live at: \033[0;33mhttps://$publicIpAddress\033[0m |"
+          my_echo "\033[1;37m==================================================\033[0m"
 
-      vmssList=$(az vmss list --resource-group $rg --query "[].{Name:name}" --output tsv)
-      for vmssName in $vmssList; do
-        vmssInstances=$(az vmss list-instances --resource-group $rg --name $vmssName --query "[].{Name:name}" --output tsv)
-        for instanceInfo in $vmssInstances; do
-          instanceName="${instanceInfo%_*}"
-          instanceId="${instanceInfo##*_}"
-          publicIpAddress=$(az vmss list-instance-public-ips --resource-group $rg --name $vmssName --query "[?contains(id, '/$instanceId/')].ipAddress" --output tsv)
-          
-          # Added this count down to ensure the Nginx server has been updated and applied to the VMSS to ensure the webserver is running.
-          echo
-          my_echo "\033[1;37m======================================================================\033[0m"
-          my_echo "\033[1;37m= \033[1;37mPlease wait for VMSS to finish updating and go online... =\033[0m"
-          my_echo "\033[1;37m======================================================================\033[0m"
+          my_echo "\033[1;37m=========================================================\033[0m"
+          my_echo "\033[1;37m         SSH Server Information Login with\033[0m"
+          my_echo "\033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m"
+          my_echo "\033[1;37m=========================================================\033[0m"
+      else
+          my_echo "\033[1;37m=======================================================================================================================\033[0m"
+          my_echo "\033[1;37m The \033[0;33m$vmssName\033[0m with the instance name of \033[0;33m$instanceName\033[0m with an instance id of \033[0;33m$instanceId\033[0m. \033[1;37mIs not hosting an Nginx Server.\033[0m"
+          my_echo "\033[1;37m=======================================================================================================================\033[0m"
 
-          countdown 30
-          
-          htmlContent=$(curl -k https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
-          if echo "$htmlContent" | grep -q "Hello, World!"; then
-              my_echo "\033[1;37m================================================\033[0m"
-              my_echo "\033[1;37m Nginx Server is Live at: \033[0;33mhttps://$publicIpAddress\033[0m"
-              my_echo "\033[1;37m================================================\033[0m"
-          else
-              my_echo "\033[1;37m========================================================================================================\033[0m"
-              my_echo "\033[1;37mThe \033[0;33m$vmssName\033[0m with the instance name of \033[0;33m$instanceName\033[0m with an instance id of \033[0;33m$instanceId\033[0m. \033[1;37mIs not hosting an Nginx Server.\033[0m"
-              my_echo "\033[1;37m========================================================================================================\033[0m"
-          fi
-        done
-      done
+          my_echo "\033[1;37m========================================================\033[0m"
+          my_echo "\033[1;37m         SSH Server Information Login with\033[0m"
+          my_echo "\033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m"
+          my_echo "\033[1;37m========================================================\033[0m"
+      fi
     done
-  else
-    my_echo "\033[1;37m========================================================================\033[0m"
-    my_echo "\033[1;37m= No resource groups containing VMSS found in your Azure subscription. =\033[0m"
-    my_echo "\033[1;37m========================================================================\033[0m"
-  fi
-
-  my_echo "\033[1;37m================================================\033[0m"
-  my_echo "\033[1;37m     SSH Server Information Login with\033[0m"
-  my_echo "\033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m"
-  my_echo "\033[1;37m================================================\033[0m"
-
+  done
   # Delete the copied asset files, and auto generated files from your local host since you will be pulling state from storage account.
-
-  delete_deployment_files
 
   ######################################
   # Ansible Section of the Bash Script #
@@ -356,20 +372,25 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
 
   # Check if the user's response is not one of the accepted values
   if [ "$answer" != "yes" ] && [ "$answer" != "y" ] && [ "$answer" != "ye" ] && [ "$answer" != "ya" ]; then
-    my_echo "Script has been completed."
+    my_echo "\033[1;37m==============================\033[0m"
+    my_echo "\033[1;37m= Script has been completed. =\033[0m"
+    my_echo "\033[1;37m==============================\033[0m"
     exit 1
   fi
 
-  my_echo "\033[1;37m====================================================================\033[0m"
-  my_echo "\033[1;37m   Preparing Hosts File for: \033[0;33m$publicIpAddress\033[0m"
-  my_echo "\033[1;37m====================================================================\033[0m"
+  my_echo "\033[1;37m=============================================================\033[0m"
+  my_echo "\033[1;37m        Preparing Hosts File for: \033[0;33m$publicIpAddress\033[0m"
+  my_echo "\033[1;37m=============================================================\033[0m"
 
   hosts_file="../../../../ansible/inventory/hosts.ini"
   sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
   # Check if [azure_vm] exists in the file
   cd ../../../../ansible/playbooks
   ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
-
+  my_echo "\033[1;37m==============================\033[0m"
+  my_echo "\033[1;37m= Script has been completed. =\033[0m"
+  my_echo "\033[1;37m==============================\033[0m"
+  exit 1
 fi
 
 #########################################
@@ -382,14 +403,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   my_echo "\033[1;37m= Preparing to Deploy the Kubernetes Manifest File =\033[0m"
   my_echo "\033[1;37m====================================================\033[0m"
 
-  output=$(awk -v RS= -v block="kubernetes_cluster_1" '$0 ~ block' "terraform.tfvars" | \
-    awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
-    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > output.txt)
-  
-  aks_name_purpose=$(cat output.txt | sed -n '1p')
-  aks_name_identifier=$(cat output.txt | sed -n '2p')
-  aks_rg_purpose=$(cat output.txt | sed -n '3p')
-  aks_rg_identifier=$(cat output.txt | sed -n '4p')
+  dynamically_generate_kubernetes_cluster_resource_values
 
   if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ]; then
     my_echo "\033[1;37m=====================================================================================================\033[0m"
@@ -397,8 +411,6 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
     my_echo "\033[1;37m=====================================================================================================\033[0m"
     exit 1
   fi
-
-  rm output.txt
 
   if ! command -v kubectl &> /dev/null; then
       my_echo "\033[1;37m===========================================================\033[0m"
@@ -415,7 +427,6 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
       my_echo "\033[1;37m===========================================\033[0m"
       exit 1
   fi
-
 
   cd ../../../../kubernetes
 

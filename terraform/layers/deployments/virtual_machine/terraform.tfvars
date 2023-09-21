@@ -76,17 +76,17 @@ main = {
 
     linux_virtual_machine_scale_sets = {
         linux_scale_set_1 = {
-            attach_public_ip = true
-            use_ssh_authentication = true
             name = {
                 purpose = "sre"
                 identifier = "ubu"
             }
             resource_group = {
+                location = "australiaeast"
                 purpose = "sre"
                 identifier = "demo"
-                location = "australiaeast"
             }
+            attach_public_ip = true
+            use_ssh_authentication = true
             settings = {
                 instances = 1
                 username = "adminuser"
@@ -98,6 +98,7 @@ main = {
                     enable_ngnix = true
                 }
             }
+            
             tags = {
                 owner = "Sacha1777@hotmail.com"
                 role = "This virtual machine scale set is the default configuration settings for this module."
