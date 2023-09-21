@@ -352,6 +352,12 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
 
   rm output.txt
 
+  if ! command -v kubectl &> /dev/null; then
+      echo "Error: 'kubectl' command not found. Installing kubectl."
+      az aks install-cli
+  fi
+
+
   az aks get-credentials --resource-group rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier --name akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier
 
   if ! kubectl get nodes -o wide; then
