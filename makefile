@@ -1,6 +1,6 @@
-.PHONY: setup install-terraform install-azure-cli install-yq install-ansible install-git install-all
+.PHONY: setup install-terraform install-azure-cli install-yq install-ansible install-git install-kubectl install-all
 
-install-all: setup install-terraform install-azure-cli install-yq install-ansible install-git
+install-all: setup install-terraform install-azure-cli install-yq install-ansible install-git install-kubectl
 
 setup:
     sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
@@ -34,3 +34,6 @@ install-git:
     sudo apt update -y
     sudo apt install git -y
     git --version
+
+install-kubectl:
+    sudo az aks install-cli
