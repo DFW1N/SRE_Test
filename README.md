@@ -60,7 +60,7 @@ To ensure you have everything setup in your `Azure` subscription please review t
 #### **Azure CLI to Install Kubectl**
 
 ```bash
-az aks install-cli
+sudo az aks install-cli
 ```
 
 ---
