@@ -24,6 +24,8 @@ This repository requires some pre-requisites on the system you will be executing
 4. **Git (for cloning)**
 5. **Ansible**
 
+> NOTE: These can all be installed now using the `makefile`, simply install `make` then run the command `sudo make install-all`
+
 **Azure Requirements:**
 
 1. **Azure Subscription**
@@ -35,6 +37,7 @@ This repository requires some pre-requisites on the system you will be executing
 **Kubernetes Requirements:**
 
 1. **az aks install-cli**
+> NOTE: This has been bundled to be installed using the `makefile`, simply install `make` then run the command `sudo make install-all`
 
 This repository uses an `Azure Storage Account` to store the terraform state files, so they are not persistant on local host.
 
@@ -73,7 +76,7 @@ If you prefer you can automatically install all software requirements, everythin
 ```bash
 sudo apt-get install make
 make --version
-make install-all
+sudo make install-all
 ```
 
 `Ubuntu/Debian`
@@ -168,6 +171,14 @@ This section will cover the requirements for the manual deployment using an Azur
 ---
 
 ###  **Step 1:** Export Environment Variables (Linux Operating system)
+
+Install all software requirements or run the following commands to auto install on `Ubuntu/Debian`:
+
+```bash
+sudo apt-get install make
+make --version
+sudo make install-all
+```
 
 ```bash
 export ARM_CLIENT_ID="YourServicePrincipalId"
