@@ -34,7 +34,6 @@ This repository requires some pre-requisites on the system you will be executing
 **Kubernetes Requirements:**
 
 1. **az aks install-cli**
-2. **kubectl**
 
 This repository uses an `Azure Storage Account` to store the terraform state files, so they are not persistant on local host.
 
