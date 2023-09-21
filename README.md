@@ -68,6 +68,13 @@ sudo az aks install-cli
 
 ### Installation Guides
 
+If you prefer you can automatically install all software requirements, everything using the `makefile` I have created. Simly run the following commands:
+
+```bash
+sudo apt-get install make
+make --version
+make install-all
+```
 
 `Ubuntu/Debian`
 #### **Terraform**
