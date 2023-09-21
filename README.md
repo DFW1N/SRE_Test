@@ -352,6 +352,59 @@ terraform/
           variables.tf
       
 ```
+
+---
+
+### What needs to be set up for ansible to be able to control windows machines?
+
+1. Linux machine that is control node must have `Ansible` Installed.
+2. Enable Windows Remote Management (WinRM) on the Windows machines that you want to manage.
+3. Configure Ansible to use WinRM to connect to the Windows machines.
+
+Here is some example code to manage the windows machine from the master node.
+
+**Hosts file**
+```bash
+[windows_hosts]
+<windows_host_1> ansible_connection=winrm ansible_winrm_port=5985
+<windows_host_2> ansible_connection=winrm ansible_winrm_port=5985
+```
+
+```bash
+---
+- hosts: windows_hosts
+  tasks:
+  - name: Start the service
+    win_service:
+      name: MyService
+      state: started
+```
+
+This can be used to perform multiple tasks on Windows machines such as configuraiton, domain joining, setups, software install and much more.
+
+Here are some great references that can be used for using `ansible-galaxy` collections
+
+[Ansible Galaxy Collection Windows Domain](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_domain_membership_module.html)
+
+```bash
+- hosts: winclient
+  gather_facts: false
+  tasks:
+  - ansible.windows.win_domain_membership:
+      dns_domain_name: ansible.vagrant
+      hostname: mydomainclient
+      domain_admin_user: testguy@ansible.vagrant
+      domain_admin_password: password123!
+      domain_ou_path: "OU=Windows,OU=Servers,DC=ansible,DC=vagrant"
+      state: domain
+    register: domain_state
+
+  - ansible.windows.win_reboot:
+    when: domain_state.reboot_required
+
+```
+Reference: [Code Block Shown Above](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_domain_membership_module.html#examples)
+
 ---
 
 ### References:
@@ -366,6 +419,7 @@ terraform/
 6. [Kubernetes Cluster AzureRM Resource](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/arc_kubernetes_cluster)
 7. [Azure Kuberenetes Cluster Best Practices](https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks/baseline-aks?toc=%2Fazure%2Faks%2Ftoc.json&bc=%2Fazure%2Faks%2Fbreadcrumb%2Ftoc.json)
 8. [Nginx Official Container Images](https://hub.docker.com/_/nginx/)
+9. [Ansible Galaxy Collection for Windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_domain_membership_module.html)
 
 
 ---
