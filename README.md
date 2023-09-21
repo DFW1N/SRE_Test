@@ -31,6 +31,11 @@ This repository requires some pre-requisites on the system you will be executing
 4. **Azure Service Principal**
 5. **Contributor Role on Azure Subscription**
 
+**Kubernetes Requirements:**
+
+1. **az aks install-cli**
+2. **kubectl**
+
 This repository uses an `Azure Storage Account` to store the terraform state files, so they are not persistant on local host.
 
 
@@ -48,6 +53,16 @@ To ensure you have everything setup in your `Azure` subscription please review t
 2. [Create Azure Resource Group (Microsoft Community)](https://techcommunity.microsoft.com/t5/startups-at-microsoft/step-by-step-guide-creating-an-azure-resource-group-on-azure/ba-p/3792368)
 3. [Create Azure Strorage Account (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
 4. [Assign Azure Roles to Azure Identities (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal)
+
+---
+
+### Guides for Azure Kubernetes Setup
+
+#### **Azure CLI to Install Kubectl**
+
+```bash
+az aks install-cli
+```
 
 ---
 
@@ -225,6 +240,8 @@ chmod 700 azure_manual_deployment.sh
 The repository has been broken down into directories with the following files this allows you to have a high overview of the directory structure:
 
 ```bash
+kubernetes/
+  nginx-webserver.yml
 ansible/
   inventory/
     hosts.ini
@@ -261,6 +278,11 @@ terraform/
             main.tf
             outputs.tf
         container/
+          azurerm_kubernetes_cluster/
+            config/
+              terraform.tfvars
+            main.tf
+            outputs.tf
         network/
           azurerm_subnet
             config/
@@ -285,6 +307,11 @@ terraform/
           outputs.tf
           variables.tf
       container/
+        azurerm_kubernetes_cluster/
+          locals.tf
+          main.tf
+          outputs.tf
+          variables.tf
       network/
         azurerm_network_interface/
           locals.tf
@@ -325,6 +352,10 @@ terraform/
 3. [Availability Zones for Azure](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#virtual-networks-and-availability-zones)
 4. [Virtual Machine Scale Set Availability Zones](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-use-availability-zones?tabs=cli-1%2Cportal-2)
 5. [Terraform Cloudinit_config Resource](https://registry.terraform.io/providers/hashicorp/cloudinit/latest/docs/data-sources/config)
+6. [Kubernetes Cluster AzureRM Resource](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/arc_kubernetes_cluster)
+7. [Azure Kuberenetes Cluster Best Practices](https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks/baseline-aks?toc=%2Fazure%2Faks%2Ftoc.json&bc=%2Fazure%2Faks%2Fbreadcrumb%2Ftoc.json)
+8. [Nginx Official Container Images](https://hub.docker.com/_/nginx/)
+
 
 ---
 

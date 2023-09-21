@@ -299,7 +299,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   rm -f "provider.tf"
   rm -f "variables.tf"
   rm -f "resources.tfvars"
-  rm -f "$1-sbx-plan.out"
+  rm -f "$1-$environment_prefix-plan.out"
 
   ######################################
   # Ansible Section of the Bash Script #
@@ -323,4 +323,78 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   cd ../../../../ansible/playbooks
   ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
 
+fi
+
+#########################################
+# Kubernetes Section of the Bash Script #
+#########################################
+
+if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "kubernetes_cluster" ]; then
+
+  echo "==============================================================="
+  echo -e "  \033[1;37mPreparing to Deploy the Kubernetes Manifest File\033[0m"
+  echo "==============================================================="
+
+  output=$(awk -v RS= -v block="kubernetes_cluster_1" '$0 ~ block' "terraform.tfvars" | \
+    awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > output.txt)
+  
+  aks_name_purpose=$(cat output.txt | sed -n '1p')
+  aks_name_identifier=$(cat output.txt | sed -n '2p')
+  aks_rg_purpose=$(cat output.txt | sed -n '3p')
+  aks_rg_identifier=$(cat output.txt | sed -n '4p')
+
+  if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ]; then
+    echo -e "\033[1;37m===========================================================================================================================\033[0m"
+    echo "Naming convention vairables have not been set in the previous task please review the bash script."
+    exit 1
+  fi
+
+  rm output.txt
+
+  az aks get-credentials --resource-group rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier --name akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier
+
+  if ! kubectl get nodes -o wide; then
+      echo "Error: Failed to get the list of nodes."
+      exit 1
+  fi
+
+
+  cd ../../../../kubernetes
+
+  if ! kubectl apply -f nginx-webserver.yml; then
+      echo "Error: Failed to apply the YAML configuration."
+      exit 1
+  fi
+
+  echo "==========================================================================="
+  echo -e "  \033[1;37mPlease wait for manifest service public ip to get allocated.\033[0m"
+  echo "==========================================================================="
+
+  countdown() {
+    local seconds="$1"
+    while [ "$seconds" -gt 0 ]; do
+      echo -e "\033[1;37mCountdown: \033[0;33m$seconds \033[1;37mseconds\033[0K\r"
+      sleep 1
+      seconds=$((seconds - 1))
+    done
+    
+    echo -e "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
+  }
+
+  countdown 10
+
+  pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo "====================================================================="
+  echo -e "  \033[1;37mKubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m"
+  echo "====================================================================="
+
+  cd ../terraform/layers/deployments/$1
+
+  rm -rf ".terraform"
+  rm -f ".terraform.lock.hcl"
+  rm -f "provider.tf"
+  rm -f "variables.tf"
+  rm -f "resources.tfvars"
+  rm -f "$1-$environment_prefix-plan.out"
 fi
