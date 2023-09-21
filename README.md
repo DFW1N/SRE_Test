@@ -71,7 +71,7 @@ sudo az aks install-cli
 
 ### Installation Guides
 
-If you prefer you can automatically install all software requirements, everything using the `makefile` I have created. Simly run the following commands:
+If you prefer you can automatically install all software requirements, everything using the `makefile`. Simply run the following commands:
 
 ```bash
 sudo apt-get install make
@@ -172,14 +172,6 @@ This section will cover the requirements for the manual deployment using an Azur
 
 ###  **Step 1:** Export Environment Variables (Linux Operating system)
 
-Install all software requirements or run the following commands to auto install on `Ubuntu/Debian`:
-
-```bash
-sudo apt-get install make
-make --version
-sudo make install-all
-```
-
 ```bash
 export ARM_CLIENT_ID="YourServicePrincipalId"
 export ARM_CLIENT_SECRET="YourServicePrincipalSecret"
@@ -195,7 +187,21 @@ export ARM_TENANT_ID="YourAzureADTenantId"
 
 **Clone the Repository**
 ```bash
-git clone https://github.com/DFW1N/SRE_Test.git && cd SRE_Test/scripts
+git clone https://github.com/DFW1N/SRE_Test.git
+```
+
+**Install all software requirements or run the following commands to auto install on `Ubuntu/Debian`:**
+
+```bash
+sudo apt-get install make
+make --version
+sudo make install-all
+```
+
+**Change directory into the `scripts/` directory to edit the config file and run the shell script from.**
+
+```bash
+cd SRE_Test/scripts
 ```
 
 **Edit the Config File**
