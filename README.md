@@ -421,7 +421,6 @@ Reference: [Code Block Shown Above](https://docs.ansible.com/ansible/latest/coll
 8. [Nginx Official Container Images](https://hub.docker.com/_/nginx/)
 9. [Ansible Galaxy Collection for Windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_domain_membership_module.html)
 
-
 ---
 
 ### **Author**
