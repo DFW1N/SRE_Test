@@ -22,6 +22,7 @@ This repository requires some pre-requisites on the system you will be executing
 2. **Azure CLI**
 3. **YQ**
 4. **Git (for cloning)**
+5. **Ansible**
 
 **Azure Requirements:**
 
@@ -110,6 +111,17 @@ wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O 
     chmod +x /usr/bin/yq
 ```
 Reference: [Official Github Repository for YQ](https://github.com/mikefarah/yq#install)
+
+---
+
+#### **Ansible**
+
+```bash
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt update
+sudo apt install ansible
+```
+Reference: [Ansible Install](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-ubuntu-20-04)
 
 ---
 
