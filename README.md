@@ -117,9 +117,9 @@ Reference: [Official Github Repository for YQ](https://github.com/mikefarah/yq#i
 #### **Ansible**
 
 ```bash
-sudo apt-add-repository ppa:ansible/ansible
-sudo apt update
-sudo apt install ansible
+sudo apt-add-repository ppa:ansible/ansible -y
+sudo apt update -y
+sudo apt install ansible -y
 ```
 Reference: [Ansible Install](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-ubuntu-20-04)
 
