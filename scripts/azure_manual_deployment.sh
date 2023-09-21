@@ -388,12 +388,12 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
     echo -e "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
   }
 
-  countdown 10
+  countdown 25
 
   pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo "====================================================================="
-  echo -e "  \033[1;37mKubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m"
-  echo "====================================================================="
+  echo "======================================================================"
+  echo -e "=  \033[1;37mKubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m ="
+  echo "======================================================================"
 
   cd ../terraform/layers/deployments/$1
 
