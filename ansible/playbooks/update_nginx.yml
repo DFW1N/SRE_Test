@@ -18,10 +18,12 @@
         state: present
       when: ansible_os_family == 'Debian'
 
-    - name: Update Nginx HTML file
-      blockinfile:
-        path: /var/www/html/index.html
-        block: |
+    - name: Clear existing content
+      shell: echo -n > /var/www/html/index.html
+
+    - name: Write new content to the file
+      copy:
+        content: |
           <!DOCTYPE html>
           <html>
           <head>
@@ -31,7 +33,7 @@
             <h1>Hello, World from Ansible</h1>
           </body>
           </html>
-      notify: Restart Nginx
+        dest: /var/www/html/index.html
 
   handlers:
     - name: Restart Nginx

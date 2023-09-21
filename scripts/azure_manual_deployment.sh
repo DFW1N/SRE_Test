@@ -7,127 +7,169 @@
 
 #!/bin/bash
 
+#############
+# VARIABLES #
+#############
+
+environment_prefix=$2
+assets_directory="../terraform/layers/assets"
+scripts_directory="."
+build_directory="../terraform/layers/deployments/$1"
+dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
+storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
+resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
+container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
+managed_by=$(yq eval '.Terraform.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
+
+###########################
+# START OF BASH FUNCTIONS #
+###########################
+
+# These functions are being used through out the whole bash script.
+
+if [ "$SHELL" = "/bin/bash" ]; then
+    USE_ECHO_E=true
+else
+    USE_ECHO_E=false
+fi
+
+my_echo() {
+    if [ "$USE_ECHO_E" = true ]; then
+        echo -e "$@"
+    else
+        echo "$@"
+    fi
+}
+
+countdown() {
+  local seconds="$1"
+  while [ "$seconds" -gt 0 ]; do
+    my_echo "\033[1;37mCountdown: \033[0;33m$seconds \033[1;37mseconds\033[0K\r"
+    sleep 1
+    seconds=$((seconds - 1))
+  done
+  
+  my_echo "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
+}
+
+delete_deployment_files() {
+  rm -rf ".terraform"
+  rm -f ".terraform.lock.hcl"
+  rm -f "provider.tf"
+  rm -f "variables.tf"
+  rm -f "resources.tfvars"
+  rm -f "$1-$environment_prefix-plan.out"
+}
+
+#########################
+# END OF BASH FUNCTIONS #
+#########################
+
 if [ $# -lt 2 ]; then
-  echo "--------------------------------------------------"
-  echo "Error: Usage $0 <target_directory> <environment_prefix>. The argument <target_directory> must be either 'virtual_machine' or 'kubernetes_cluster' while the <environment_prefix> must be 3 letters."
-  echo
-  echo "Usage: $0 <target_directory> <environment_prefix> [-plan] [-destroy]"
+  my_echo "\033[1;37m========================================================\033[0m"
+  my_echo "\033[1;37m Error: Usage $0 <target_directory> <environment_prefix>. The argument <target_directory> must be either 'virtual_machine' or 'kubernetes_cluster' while the <environment_prefix> must be 3 letters. \033[0m"
+  my_echo "\033[1;37m Usage: $0 <target_directory> <environment_prefix> [-plan] [-destroy] \033[0m"
+  my_echo "\033[1;37m========================================================\033[0m"
   exit 1
 fi
 
 if [ "$1" != "virtual_machine" ] && [ "$1" != "kubernetes_cluster" ]; then
-  echo "--------------------------------------------------"
-  echo "Error: Invalid argument. The argument must be either 'virtual_machine' or 'kubernetes_cluster'."
+  my_echo "\033[1;37m===================================================================================================\033[0m"
+  my_echo "\033[1;37m= Error: Invalid argument. The argument must be either 'virtual_machine' or 'kubernetes_cluster'. =\033[0m"
+  my_echo "\033[1;37m===================================================================================================\033[0m"
   exit 1
 fi
 
 length=$(echo -n $2 | wc -c)
 
 if [ $length -gt 3 ]; then
-  echo "--------------------------------------------------"
-  echo "Error: Environment prefix must be exactly 3 letters."
+  my_echo "\033[1;37m========================================================\033[0m"
+  my_echo "\033[1;37m= Error: Environment prefix must be exactly 3 letters. =\033[0m"
+  my_echo "\033[1;37m========================================================\033[0m"
   exit 1
 fi
-
-environment_prefix=$2
 
 command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
 if ! command_exists az; then
-  echo "--------------------------------------------------"
-  echo "Error: Azure CLI is not installed. Please install it and make sure it's in your PATH."
-  echo "If you are using Ubuntu/Linux please run the command: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash to install."
-  echo "Please review the repository root README.md for install guidance."
+  my_echo "\033[1;37m============================================================================================================================\033[0m"
+  my_echo "\033[1;37m=          Error: Azure CLI is not installed. Please install it and make sure it's in your PATH.                           =\033[0m"
+  my_echo "\033[1;37m= If you are using Ubuntu/Linux please run the command: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash to install. =\033[0m"
+  my_echo "\033[1;37m=                Please review the repository root README.md for install guidance.                                         =\033[0m"
+  my_echo "\033[1;37m============================================================================================================================\033[0m"
   exit 1
 fi
 
 if ! command_exists yq; then
-  echo "--------------------------------------------------"
-  echo "Error: YQ is not installed. Please install it and make sure it's in your PATH."
-  echo "If you are using Ubuntu/Linux please run the command: sudo apt-get install yq to install."
-  echo "Please review the repository root README.md for install guidance."
+  my_echo "\033[1;37m=============================================================================================\033[0m"
+  my_echo "\033[1;37m=      Error: YQ is not installed. Please install it and make sure it's in your PATH.       =\033[0m"
+  my_echo "\033[1;37m= If you are using Ubuntu/Linux please run the command: sudo apt-get install yq to install. =\033[0m"
+  my_echo "\033[1;37m=            Please review the repository root README.md for install guidance.              =\033[0m"
+  my_echo "\033[1;37m=============================================================================================\033[0m"
   exit 1
 fi
 
 if ! command_exists terraform; then
-  echo -e "\033[1;37m===========================================================================\033[0m"
-  echo "Error: Terraform is not installed. Please install it and make sure it's in your PATH."
-  echo "Please review the repository root README.md for install guidance."
+  my_echo "\033[1;37m========================================================================================\033[0m"
+  my_echo "\033[1;37m= Error: Terraform is not installed. Please install it and make sure it's in your PATH."
+  my_echo "\033[1;37m= Please review the repository root README.md for install guidance."
+  my_echo "\033[1;37m========================================================================================\033[0m"
   exit 1
 fi
 
 if [ -z "$ARM_CLIENT_ID" ] || [ -z "$ARM_CLIENT_SECRET" ] || [ -z "$ARM_TENANT_ID" ] || [ -z "$ARM_SUBSCRIPTION_ID" ]; then
-  echo -e "\033[1;37m===========================================================================================================================\033[0m"
-  echo "Error: Environment variables not set. Please ensure ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, and ARM_SUBSCRIPTION_ID are set."
+  my_echo "\033[1;37m=========================================================================================================================================\033[0m"
+  my_echo "\033[1;37m= Error: Environment variables not set. Please ensure ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, and ARM_SUBSCRIPTION_ID are set. =\033[0m"
+  my_echo "\033[1;37m=========================================================================================================================================\033[0m"
   exit 1
 fi
 
 az login --service-principal --username "$ARM_CLIENT_ID" --password "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
 
 if [ $? -ne 0 ]; then
-  echo "Error: Azure login failed. Please check your service principal credentials."
+  my_echo "\033[1;37m===============================================================================\033[0m"
+  my_echo "\033[1;37m= Error: Azure login failed. Please check your service principal credentials. =\033[0m"
+  my_echo "\033[1;37m===============================================================================\033[0m"
   exit 1
 fi
 
 az account set --subscription "$ARM_SUBSCRIPTION_ID"
 
 if [ $? -ne 0 ]; then
-  echo -e "\033[1;37m==============================================================\033[0m"
-  echo "Error: Azure subscription set failed. Please check your subscription ID."
+  my_echo "\033[1;37m============================================================================\033[0m"
+  my_echo "\033[1;37m= Error: Azure subscription set failed. Please check your subscription ID. =\033[0m"
+  my_echo "\033[1;37m============================================================================\033[0m"
   exit 1
 fi
 
-# Terraform assets directory.
-assets_directory="../terraform/layers/assets"
-# Script directory.
-scripts_directory="."
-# Terraform build directory where the CLI will be executed from.
-build_directory="../terraform/layers/deployments/$1"
-
-#################################
-# Config.yml Declared Variables #
-#################################
-
-storage_account_name=$(yq eval '.Terraform.Backend.storage_account_name' $scripts_directory/config.yml)
-resource_group_name=$(yq eval '.Terraform.Backend.resource_group_name' $scripts_directory/config.yml)
-container_name=$(yq eval '.Terraform.Backend.container_name' $scripts_directory/config.yml)
-
-####################
-# Module Variables #
-####################
-
-managed_by=$(yq eval '.Terraform.Modules.Variables.Tags.managedBy' $scripts_directory/config.yml)
-
-dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
-
 if [ ! -d "$assets_directory" ]; then
-  echo -e "\033[1;37m=============================\033[0m"
-  echo "Error: Source directory does not exist."
-  echo -e "\033[1;37m=============================\033[0m"
+  my_echo "\033[1;37m===========================================\033[0m"
+  my_echo "\033[1;37m= Error: Source directory does not exist. =\033[0m"
+  my_echo "\033[1;37m===========================================\033[0m"
   exit 1
 fi
 
 if [ ! -d "$build_directory" ]; then
-  echo -e "\033[1;37m==========================================================================\033[0m"
-  echo "Error: Build directory does not exist. Please check the name of the build directory."
-  echo -e "\033[1;37m==========================================================================\033[0m"
+  my_echo "\033[1;37m========================================================================================\033[0m"
+  my_echo "\033[1;37m= Error: Build directory does not exist. Please check the name of the build directory. =\033[0m"
+  my_echo "\033[1;37m========================================================================================\033[0m"
   exit 1
 fi
 
 cp -ru $assets_directory/* $build_directory/
 
 if [ $? -eq 0 ]; then
-  echo
-  echo -e "\033[1;37m================================================\033[0m"
-  echo -e "\033[1;37mFiles copied successfully from assets directory.\033[0m"
-  echo -e "\033[1;37m================================================\033[0m"
-  echo
+  my_echo
+  my_echo "\033[1;37m================================================\033[0m"
+  my_echo "\033[1;37mFiles copied successfully from assets directory.\033[0m"
+  my_echo "\033[1;37m================================================\033[0m"
+  my_echo
 else
-  echo -e "\033[1;37m========================================\033[0m"
-  echo "No new files copied. Existing files are up to date."
-  echo -e "\033[1;37m========================================\033[0m"
+  my_echo "\033[1;37m=======================================================\033[0m"
+  my_echo "\033[1;37m= No new files copied. Existing files are up to date. =\033[0m"
+  my_echo "\033[1;37m=======================================================\033[0m"
 fi
 
 cd $build_directory
@@ -159,8 +201,9 @@ terraform init \
   -upgrade
 
 if [ $? -ne 0 ]; then
-  echo "--------------------------------------------------"
-  echo "Error: Terraform init failed. Aborting deployment."
+  my_echo "\033[1;37m======================================================\033[0m"
+  my_echo "\033[1;37m= Error: Terraform init failed. Aborting deployment. =\033[0m"
+  my_echo "\033[1;37m======================================================\033[0m"
   exit 1
 fi
 
@@ -194,8 +237,9 @@ terraform plan $deploy_suffix \
   -out=$1-$environment_prefix-plan.out
 
 if [ $? -ne 0 ]; then
-  echo "--------------------------------------------------"
-  echo "Error: Terraform plan failed. Aborting deployment."
+  my_echo "\033[1;37m======================================================\033[0m"
+  my_echo "\033[1;37m= Error: Terraform plan failed. Aborting deployment. =\033[0m"
+  my_echo "\033[1;37m======================================================\033[0m"
   exit 1
 fi
 
@@ -210,28 +254,35 @@ if [ "$deploy_terraform_apply" = true ]; then
     -auto-approve
 
   if [ $? -ne 0 ]; then
-  echo "---------------------------------------------------------"
-    echo "Error: Terraform apply failed. Deployment unsuccessful."
+    my_echo "\033[1;37m===========================================================\033[0m"
+    my_echo "\033[1;37m= Error: Terraform apply failed. Deployment unsuccessful. =\033[0m"
+    my_echo "\033[1;37m===========================================================\033[0m"
     exit 1
   fi
 else
-  echo "--------------------------------------------------------"
-  echo "Terraform apply is skipped as -plan option was provided."
+  my_echo "\033[1;37m============================================================\033[0m"
+  my_echo "\033[1;37m= Terraform apply is skipped as -plan option was provided. =\033[0m"
+  my_echo "\033[1;37m============================================================\033[0m"
+fi
+
+if "$destroy_terraform" = true ]; then
+  delete_deployment_files
 fi
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "virtual_machine" ]; then
 
   if ! command_exists ansible; then
-    echo -e "\033[1;37m===========================================================================\033[0m"
-    echo "Error: Ansible is not installed. Please install it and make sure it's in your PATH."
-    echo "Please review the repository root README.md for install guidance."
+    my_echo "\033[1;37m=======================================================================================\033[0m"
+    my_echo "\033[1;37m= Error: Ansible is not installed. Please install it and make sure it's in your PATH. =\033[0m"
+    my_echo "\033[1;37m=       Please review the repository root README.md for install guidance.             =\033[0m"
+    my_echo "\033[1;37m=======================================================================================\033[0m"
     exit 1
   fi
 
   echo
-  echo "=================================================================="
-  echo -e "= \033[1;37mIterating through resource groups to find VMSS. Please wait... \033[0m="
-  echo "=================================================================="
+  my_echo "\033[1;37m==================================================================\033[0m"
+  my_echo "\033[1;37m= Iterating through resource groups to find VMSS. Please wait... =\033[0m"
+  my_echo "\033[1;37m==================================================================\033[0m"
 
   resourceGroups=$(az group list --query "[].name" --output tsv)
   resourceGroupsContainingVMSS=""
@@ -246,11 +297,12 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
 
   if [ -n "$resourceGroupsContainingVMSS" ]; then
     echo
-    echo -e "======= \033[1;37mResource Groups Containing VMSS\033[0m========="
+    my_echo "\033[1;37m===================================\033[0m"
+    my_echo "\033[1;37m= Resource Groups Containing VMSS =\033[0m"
     for rg in $resourceGroupsContainingVMSS; do
-      echo "================================================"
-      echo -e "              \033[0;33m$rg\033[0m"
-      echo "================================================"
+      my_echo "\033[1;37m================================================\033[0m"
+      my_echo "\033[1;37m=            \033[0;33m$rg\033[0m              =\033[0m"
+      my_echo "\033[1;37m================================================\033[0m"
 
       vmssList=$(az vmss list --resource-group $rg --query "[].{Name:name}" --output tsv)
       for vmssName in $vmssList; do
@@ -262,54 +314,39 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
           
           # Added this count down to ensure the Nginx server has been updated and applied to the VMSS to ensure the webserver is running.
           echo
-          echo "============================================================"
-          echo -e "= \033[1;37mPlease wait for VMSS to finish updating and go online... \033[0m="
-          echo "============================================================"
-
-          countdown() {
-            local seconds="$1"
-            while [ "$seconds" -gt 0 ]; do
-              echo -e "\033[1;37mCountdown: \033[0;33m$seconds \033[1;37mseconds\033[0K\r"
-              sleep 1
-              seconds=$((seconds - 1))
-            done
-            
-            echo -e "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
-          }
+          my_echo "\033[1;37m======================================================================\033[0m"
+          my_echo "\033[1;37m= \033[1;37mPlease wait for VMSS to finish updating and go online... =\033[0m"
+          my_echo "\033[1;37m======================================================================\033[0m"
 
           countdown 30
           
-          htmlContent=$(curl -s $publicIpAddress)
+          htmlContent=$(curl -k https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
           if echo "$htmlContent" | grep -q "Hello, World!"; then
-              echo "================================================"
-              echo -e "  \033[1;37mNginx Server is Live at: \033[0;33mhttp://$publicIpAddress\033[0m"
-              echo "================================================"
+              my_echo "\033[1;37m================================================\033[0m"
+              my_echo "\033[1;37m Nginx Server is Live at: \033[0;33mhttps://$publicIpAddress\033[0m"
+              my_echo "\033[1;37m================================================\033[0m"
           else
-              echo "========================================================================================================"
-              echo -e "The \033[0;33m$vmssName\033[0m with the instance name of \033[0;33m$instanceName\033[0m with an instance id of \033[0;33m$instanceId\033[0m. Is not hosting an Nginx Server."
-              echo "========================================================================================================"
+              my_echo "\033[1;37m========================================================================================================\033[0m"
+              my_echo "\033[1;37mThe \033[0;33m$vmssName\033[0m with the instance name of \033[0;33m$instanceName\033[0m with an instance id of \033[0;33m$instanceId\033[0m. \033[1;37mIs not hosting an Nginx Server.\033[0m"
+              my_echo "\033[1;37m========================================================================================================\033[0m"
           fi
         done
       done
     done
   else
-    echo "--------------------------------------------------------------------"
-    echo "No resource groups containing VMSS found in your Azure subscription."
+    my_echo "\033[1;37m========================================================================\033[0m"
+    my_echo "\033[1;37m= No resource groups containing VMSS found in your Azure subscription. =\033[0m"
+    my_echo "\033[1;37m========================================================================\033[0m"
   fi
 
-  echo "================================================"
-  echo -e "  \033[1;37m SSH Server Information Login with\033[0m="
-  echo -e "  \033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m"
-  echo "================================================"
+  my_echo "\033[1;37m================================================\033[0m"
+  my_echo "\033[1;37m     SSH Server Information Login with\033[0m"
+  my_echo "\033[0;33m ssh -i $HOME/.ssh/azure adminuser@$publicIpAddress\033[0m"
+  my_echo "\033[1;37m================================================\033[0m"
 
   # Delete the copied asset files, and auto generated files from your local host since you will be pulling state from storage account.
 
-  rm -rf ".terraform"
-  rm -f ".terraform.lock.hcl"
-  rm -f "provider.tf"
-  rm -f "variables.tf"
-  rm -f "resources.tfvars"
-  rm -f "$1-$environment_prefix-plan.out"
+  delete_deployment_files
 
   ######################################
   # Ansible Section of the Bash Script #
@@ -319,13 +356,13 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
 
   # Check if the user's response is not one of the accepted values
   if [ "$answer" != "yes" ] && [ "$answer" != "y" ] && [ "$answer" != "ye" ] && [ "$answer" != "ya" ]; then
-    echo "Script has been completed."
+    my_echo "Script has been completed."
     exit 1
   fi
 
-  echo "================================================"
-  echo -e "  \033[1;37mPreparing Hosts File for: \033[0;33m$publicIpAddress\033[0m"
-  echo "================================================"
+  my_echo "\033[1;37m====================================================================\033[0m"
+  my_echo "\033[1;37m   Preparing Hosts File for: \033[0;33m$publicIpAddress\033[0m"
+  my_echo "\033[1;37m====================================================================\033[0m"
 
   hosts_file="../../../../ansible/inventory/hosts.ini"
   sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
@@ -341,14 +378,9 @@ fi
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "kubernetes_cluster" ]; then
 
-  if ! command -v kubectl &> /dev/null; then
-      echo "Error: 'kubectl' command not found. Installing kubectl."
-      az aks install-cli
-  fi
-
-  echo "==============================================================="
-  echo -e "  \033[1;37mPreparing to Deploy the Kubernetes Manifest File\033[0m"
-  echo "==============================================================="
+  my_echo "\033[1;37m====================================================\033[0m"
+  my_echo "\033[1;37m= Preparing to Deploy the Kubernetes Manifest File =\033[0m"
+  my_echo "\033[1;37m====================================================\033[0m"
 
   output=$(awk -v RS= -v block="kubernetes_cluster_1" '$0 ~ block' "terraform.tfvars" | \
     awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
@@ -360,17 +392,27 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   aks_rg_identifier=$(cat output.txt | sed -n '4p')
 
   if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ]; then
-    echo -e "\033[1;37m===========================================================================================================================\033[0m"
-    echo "Naming convention vairables have not been set in the previous task please review the bash script."
+    my_echo "\033[1;37m=====================================================================================================\033[0m"
+    my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+    my_echo "\033[1;37m=====================================================================================================\033[0m"
     exit 1
   fi
 
   rm output.txt
 
+  if ! command -v kubectl &> /dev/null; then
+      my_echo "\033[1;37m===========================================================\033[0m"
+      my_echo "\033[1;37m= Error: 'kubectl' command not found. Installing kubectl. =\033[0m"
+      my_echo "\033[1;37m===========================================================\033[0m"
+  fi
+
+
   az aks get-credentials --resource-group rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier --name akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier
 
   if ! kubectl get nodes -o wide; then
-      echo "Error: Failed to get the list of nodes."
+      my_echo "\033[1;37m===========================================\033[0m"
+      my_echo "\033[1;37m= Error: Failed to get the list of nodes. =\033[0m"
+      my_echo "\033[1;37m===========================================\033[0m"
       exit 1
   fi
 
@@ -378,38 +420,24 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   cd ../../../../kubernetes
 
   if ! kubectl apply -f nginx-webserver.yml; then
-      echo "Error: Failed to apply the YAML configuration."
+      my_echo "\033[1;37m==================================================\033[0m"
+      my_echo "\033[1;37m= Error: Failed to apply the YAML configuration. =\033[0m"
+      my_echo "\033[1;37m==================================================\033[0m"
       exit 1
   fi
 
-  echo "==========================================================================="
-  echo -e "  \033[1;37mPlease wait for manifest service public ip to get allocated.\033[0m"
-  echo "==========================================================================="
-
-  countdown() {
-    local seconds="$1"
-    while [ "$seconds" -gt 0 ]; do
-      echo -e "\033[1;37mCountdown: \033[0;33m$seconds \033[1;37mseconds\033[0K\r"
-      sleep 1
-      seconds=$((seconds - 1))
-    done
-    
-    echo -e "\033[1;37mCountdown: \033[0;33m0 \033[1;37mseconds\033[0m="
-  }
+  my_echo "\033[1;37m================================================================\033[0m"
+  my_echo "\033[1;37m= Please wait for manifest service public ip to get allocated. =\033[0m"
+  my_echo "\033[1;37m================================================================\033[0m"
 
   countdown 25
 
   pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo "======================================================================"
-  echo -e "=  \033[1;37mKubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m ="
-  echo "======================================================================"
+  my_echo "\033[1;37m======================================================================"
+  my_echo "\033[1;37m= Kubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m ="
+  my_echo "\033[1;37m======================================================================"
 
   cd ../terraform/layers/deployments/$1
 
-  rm -rf ".terraform"
-  rm -f ".terraform.lock.hcl"
-  rm -f "provider.tf"
-  rm -f "variables.tf"
-  rm -f "resources.tfvars"
-  rm -f "$1-$environment_prefix-plan.out"
+  delete_deployment_files
 fi

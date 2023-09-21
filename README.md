@@ -444,6 +444,7 @@ Reference: [Code Block Shown Above](https://docs.ansible.com/ansible/latest/coll
 7. [Azure Kuberenetes Cluster Best Practices](https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks/baseline-aks?toc=%2Fazure%2Faks%2Ftoc.json&bc=%2Fazure%2Faks%2Fbreadcrumb%2Ftoc.json)
 8. [Nginx Official Container Images](https://hub.docker.com/_/nginx/)
 9. [Ansible Galaxy Collection for Windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_domain_membership_module.html)
+10. [OpenSSL Essentials for Self Signed Certificates](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs)
 
 ---
 
