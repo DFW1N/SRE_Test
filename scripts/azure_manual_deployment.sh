@@ -16,6 +16,7 @@ assets_directory="../terraform/layers/assets"
 scripts_directory="."
 build_directory="../terraform/layers/deployments/$1"
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
+ansible_user="adminuser"
 
 ###########################
 # START OF BASH FUNCTIONS #
@@ -324,7 +325,13 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   my_echo "\033[1;37m============================================\033[0m"
   my_echo "\033[1;37m= Searching for vmsss name, please wait... =\033[0m"
   my_echo "\033[1;37m============================================\033[0m"
-  my_echo "\033[1;37m               \033[0;33m$vmssList                   \033[0m"
+  if [ -z "$vmssList" ]; then
+      my_echo "\033[1;37m  No VMSS instances found. Exiting script.\033[0m"
+      exit 1  # You can choose to exit the script with a non-zero status code (1) here
+  else
+      my_echo "\033[1;37m               \033[0;33m$vmssList                   \033[0m"
+  fi
+
   for vmssName in $vmssList; do
     vmssInstances=$(az vmss list-instances --resource-group $vmss_rg_name --name $vmssName --query "[].{Name:name}" --output tsv)
     for instanceInfo in $vmssInstances; do
@@ -337,11 +344,16 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
       my_echo "\033[1;37m============================================================\033[0m"
       my_echo "\033[1;37m= Please wait for VMSS to finish updating and go online... =\033[0m"
       my_echo "\033[1;37m============================================================\033[0m"
+      my_echo "\033[1;37m                      \033[0;33m$vmssList                   \033[0m"
 
-      countdown 15
+      if curl -k -s --head "https://$publicIpAddress" | grep "HTTP/1.1 200 OK\|HTTP/2 200"; then
+          my_echo "\033[1;37mWebsite \033[0;33mhttps://$publicIpAddress \033[1;37m Website is reachable. Skipping countdown.\033[0m"
+      else
+          countdown 20
+      fi
       
-      htmlContent=$(curl -k https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
-      if echo "$htmlContent" | grep -q "Hello, World!"; then
+      htmlContent=$(curl -k -s https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
+      if echo "$htmlContent" | grep -q "Hello, World!\|Hello, World from Ansible"; then
           my_echo "\033[1;37m==================================================\033[0m"
           my_echo "\033[1;37m| Nginx Server is Live at: \033[0;33mhttps://$publicIpAddress\033[0m |"
           my_echo "\033[1;37m==================================================\033[0m"
@@ -362,7 +374,6 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
       fi
     done
   done
-  # Delete the copied asset files, and auto generated files from your local host since you will be pulling state from storage account.
 
   ######################################
   # Ansible Section of the Bash Script #
@@ -383,10 +394,33 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   my_echo "\033[1;37m=============================================================\033[0m"
 
   hosts_file="../../../../ansible/inventory/hosts.ini"
-  sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
+  entry_to_add="$publicIpAddress ansible_user=$ansible_user ansible_ssh_private_key_file=/$HOME/.ssh/azure"
+
+  if ! grep -qF "$entry_to_add" "$hosts_file"; then
+      # Add the entry if it doesn't exist
+      sed -i "/^\[azure_vm\]/a $entry_to_add" "$hosts_file"
+      my_echo "\033[1;37mEntry added to \033[0;33mhosts.ini\033[0m"
+  else
+      my_echo "\033[1;37mEntry already exists in \033[0;33mhosts.ini\033[1;37m, Skipping.\033[0m"
+  fi
+  #sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
   # Check if [azure_vm] exists in the file
   cd ../../../../ansible/playbooks
-  ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
+  PYTHONWARNINGS="ignore" ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
+  if [ $? -ne 0 ]; then
+      my_echo "\033[1;37m======================================\033[0m"
+      my_echo "\033[1;37m= Ansible playbook execution failed. =\033[0m"
+      my_echo "\033[1;37m======================================\033[0m"
+      exit 1
+  else
+      my_echo "\033[1;37m===========================================\033[0m"
+      my_echo "\033[1;37m= Ansible playbook executed successfully. =\033[0m"
+      my_echo "\033[1;37m===========================================\033[0m"
+  fi
+  htmlContent=$(curl -k -s https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
+  if echo "$htmlContent" | grep -q "Hello, World from Ansible"; then
+    my_echo "\033[1;37m Webpage has been updated to: \033[0;33m$htmlContent\033[1;37m on \033[0;33mhttps://$publicIpAddress\033[0m"
+  fi
   my_echo "\033[1;37m==============================\033[0m"
   my_echo "\033[1;37m= Script has been completed. =\033[0m"
   my_echo "\033[1;37m==============================\033[0m"
@@ -447,8 +481,4 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   my_echo "\033[1;37m======================================================================"
   my_echo "\033[1;37m= Kubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m ="
   my_echo "\033[1;37m======================================================================"
-
-  cd ../terraform/layers/deployments/$1
-
-  delete_deployment_files
 fi
