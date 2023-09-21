@@ -328,7 +328,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   echo "================================================"
 
   hosts_file="../../../../ansible/inventory/hosts.ini"
-  sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=$HOME/.ssh/azure" $hosts_file
+  sed -i "/^\[azure_vm\]/a $publicIpAddress ansible_user=adminuser ansible_ssh_private_key_file=/$HOME/.ssh/azure" $hosts_file
   # Check if [azure_vm] exists in the file
   cd ../../../../ansible/playbooks
   ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
