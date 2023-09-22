@@ -37,5 +37,6 @@ terraform/layers/modules/compute/azurerm_linux_virtual_machine
 terraform/main/container/azurerm_container_registry
 terraform/layers/modules/compute/azurerm_container_registry
 terraform/main/network/azurerm_public_ip
+terraform/main/network/azurerm_network_interface
 
 .vscode

@@ -289,11 +289,44 @@ chmod 700 azure_manual_deployment.sh
 
 ---
 
+## Architecture Diagrams
+
+This section will be covering the infrastructure deployed for each deployment solution.
+
+---
+
+### Virtual Machine Scale Set:
+
+This diagram covers the infrastructure deployment for a autoscaling webserver hosted on an `Azure Virtual Machine Scale Set`, that has a self assigned `SSL` certificate.
+
+![Virtual Machine Scale Set Infrastructure Diagram](docs/infrastructure/diagrams/virtual_machine_scale_set_infrastructure_diagram.png)
+
+
+---
+
+### Kubernetes Cluster:
+
+This diagram covers the infrastructure deployment for a autoscaling webserver hosted on an `Azure Kubernetes Cluster`, that is simply pulling a basic official NGINX webserver image and hosting it over HTTP so you can access it over the internet.
+
+![Kubernetes Cluster Infrastructure Diagram](docs/infrastructure/diagrams/kubernetes_cluster_infrastructure_diagram.png)
+
+
+---
+
 ## Directory & File Structure
 
 The repository has been broken down into directories with the following files this allows you to have a high overview of the directory structure:
 
+<details>
+  <summary>Click to expand directory and file structure</summary>
+
 ```bash
+docs/
+  infrastructure/
+    diagrams/
+      kubernetes_cluster_infrastructure_diagram.png
+      virtual_machine_scale_set_infrastructure_diagram.png
+      sre_infrastructure_diagrams.drawio
 kubernetes/
   nginx-webserver.yml
 ansible/
@@ -395,7 +428,7 @@ terraform/
           variables.tf
       
 ```
-
+</details>
 ---
 
 ### What needs to be set up for ansible to be able to control windows machines?
