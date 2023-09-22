@@ -6,9 +6,28 @@ This repository has been created to deploy multiple resource types in Azure usin
 
 ### **Summary:**
 
-1. Create an auto scaling web server using a Virtual Machine Scale Set in Azure with a `Hello, World!` webpage using nginx with `Terraform`. 
+1. Create an auto scaling web server using a Virtual Machine Scale Set in Azure with a `Hello, World!` webpage using nginx with `Terraform` with a self assigned https certificate pushing traffic through https. 
 2. Use an `Ansible` playbook to update the webpage on the Virtual Machine Scale Set to update the webpage with `Hello, World from Ansible`.
 3. Use `Terraform` to deploy a Kubernetes cluster in Azure while serving an `Hello World` page, using an official, debian/ubuntu container.
+
+---
+
+### **FAQ**
+
+- **Question:** Why doesn't this repository use CI/CD Pipelines at the moment?
+  - **Answer:** This repository has been developed to showcase terraform code modules, with basic http web server deployments, to test a working CI/CD pipeline that would require the users deploying the repository would require active devops cloud agents running in a new repository. It would also depend on the preferred DevOps Platform used to execute the CI/CD deployments. Some may prefer, `Github`, `Jenkins`, `Gitlab` or `Azure DevOps`. This would be alot of time to develop multiple pipelines that support multiple DevOps platforms. This may also cause issues around having a pay wall requirements to get simple `terraform` modules deployed. The conclusion was to provide a fast user friendly method with no pay walls risks or lisencing requirements involved.
+
+- **Question:** Why do you not declare availability zones for your `virtual network` or `subnet` resources in `Azure`?
+  - **Answer:** This repository is using `Microsoft Azure` to deploy the cloud infrastructure, per `Microsoft` documentation all `virtual networks` and `subnets` automatically get distrubted to all availability zones in the region. Quote `"Virtual networks and subnets span all availability zones in a region. You don't need to divide them by availability zones to accommodate zonal resources."` [[Reference]](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview#virtual-networks-and-availability-zones), therefore allocating availability zones in those resources are not required. However the `Virtual Machine Scale Set` has been setup to use availability zones per the `terraform` module to ensure zone redundancy.
+
+- **Question:** Why have you decided to use a Bash script to deploy the resources in this repository? 
+  - **Answer:** Simplicity is the answer here, I wanted to demonstrate a straight forward easy way on deploying Azure resources with nothing more then an active `Azure Subscription`, `Azure Storage Account` & `Service Principal`. There are no paywalls or additional setup requirements to get your deployments working other then basic `Azure` requirements. Developing a bash script allows for everything to be automated end-to-end for all the processes with minimal user input but still show-casing the module capabilities.
+
+- **Question:** Can this repository modules be imported into DevOps Service Platforms?
+  - **Answer:** Absoloutely, this repository is completely compatiable with all major DevOps Platform providers, given you have active agents to execute your pipeline tasks for you. It would be easy to implement just replicate the `bash` script tasks into a provider pipeline `.yml` file. All tasks are written in pure `bash` making it super easy to replicate into any CI/CD pipeline `.yml` file or deployment.
+
+- **Question**: Why not use a `powershell` script instead of `bash`?
+  - **Answer:** `Powershell` is much slower then bash and a lot of dependancies and modules to import to work. `Bash` is preffered when it comes to speed and efficency with almost no dependencies as majority of functions used come standard. However, it is possible to replicate the `bash` script written to work in `powershell`.
 
 ---
 

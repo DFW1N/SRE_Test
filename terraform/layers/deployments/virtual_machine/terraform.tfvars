@@ -75,7 +75,7 @@ main = {
     }
 
     linux_virtual_machine_scale_sets = {
-        linux_scale_set_1 = {
+        linux_scale_set_1 = { # <--- Please don't change this value the bash block uses this to extract the naming convention dynamic values.
             name = {
                 purpose = "sre"
                 identifier = "ubu"

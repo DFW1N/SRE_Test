@@ -24,7 +24,7 @@ main = {
     }
 
     kubernetes_clusters = {
-        kubernetes_cluster_1 = {
+        kubernetes_cluster_1 = { # <--- Please don't change this value the bash block uses this to extract the naming convention dynamic values.
             name = {
                 purpose = "sre"
                 identifier = "demo"
