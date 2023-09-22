@@ -66,6 +66,19 @@ dynamically_generate_kubernetes_cluster_resource_values() {
   aks_name_identifier=$(cat output.txt | sed -n '2p')
   aks_rg_purpose=$(cat output.txt | sed -n '3p')
   aks_rg_identifier=$(cat output.txt | sed -n '4p')
+  # Dynically build Azure Kubernetes Cluster Resource Group name depending on multiple variabes and bash run-time input selections.
+  aks_rg_name="rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier"
+  aks_name="akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier"
+
+  rm output.txt
+
+  if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ] || [ -z "$aks_rg_name" ] || [ -z "$aks_name" ]; then
+    my_echo "\033[1;37m=====================================================================================================\033[0m"
+    my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+    my_echo "\033[1;37m=====================================================================================================\033[0m"
+    exit 1
+  fi
+
 }
 
 dynamically_generate_virtual_machine_resource_values() {
@@ -85,10 +98,18 @@ dynamically_generate_virtual_machine_resource_values() {
   vmss_rg_location=$(cat resource_group_output.txt | sed -n '1p')
   vmss_rg_purpose=$(cat resource_group_output.txt | sed -n '2p')
   vmss_rg_identifier=$(cat resource_group_output.txt | sed -n '3p')
-
+  # Dynically build Azure Virtual Machine Scale Set Resource Group name depending on multiple variabes and bash run-time input selections.
   vmss_rg_name="rg-$vmss_rg_purpose-$environment_prefix-aue-$vmss_rg_identifier"
 
   rm resource_group_output.txt
+
+  if [ -z "$vmss_name_purpose" ] || [ -z "$vmss_name_identifier" ] || [ -z "$vmss_rg_location" ] || [ -z "$vmss_rg_purpose" ] || [ -z "$vmss_rg_identifier" ] || [ -z "$vmss_rg_name" ]; then
+    my_echo "\033[1;37m=====================================================================================================\033[0m"
+    my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+    my_echo "\033[1;37m=====================================================================================================\033[0m"
+    exit 1
+  fi
+
 }
 
 
@@ -158,6 +179,10 @@ if [ -z "$ARM_CLIENT_ID" ] || [ -z "$ARM_CLIENT_SECRET" ] || [ -z "$ARM_TENANT_I
   exit 1
 fi
 
+##################################################
+# START OF BASH SCRIPT AFTER EXPRESSIONAL CHECKS #
+##################################################
+
 az login --service-principal --username "$ARM_CLIENT_ID" --password "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
 
 if [ $? -ne 0 ]; then
@@ -174,6 +199,20 @@ if [ $? -ne 0 ]; then
   my_echo "\033[1;37m= Error: Azure subscription set failed. Please check your subscription ID. =\033[0m"
   my_echo "\033[1;37m============================================================================\033[0m"
   exit 1
+fi
+
+service_principal_object_id=$(az ad sp show --id "$ARM_CLIENT_ID" --query servicePrincipalNames -o tsv)
+role_assignment=$(az role assignment list --assignee "$service_principal_object_id" --scope "/subscriptions/$ARM_SUBSCRIPTION_ID" --query "[?roleDefinitionName=='Contributor']" -o json)
+
+if [ -n "$role_assignment" ]; then
+    my_echo "\033[1;37m=============================================================================\033[0m"
+    my_echo "\033[1;37m= The service principal has the \033[0;33mContributor \033[1;37mrole on the Azure subscription. =\033[0m"
+    my_echo "\033[1;37m=============================================================================\033[0m"
+else
+    my_echo "\033[1;37m=======================================================================================\033[0m"
+    my_echo "\033[1;37m= The service principal does not have the \033[0;33mContributor \033[1;37mrole on the Azure subscription. =\033[0m"
+    my_echo "\033[1;37m=======================================================================================\033[0m"
+    exit 1
 fi
 
 if [ ! -d "$assets_directory" ]; then
@@ -327,7 +366,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   my_echo "\033[1;37m============================================\033[0m"
   if [ -z "$vmssList" ]; then
       my_echo "\033[1;37m  No VMSS instances found. Exiting script.\033[0m"
-      exit 1  # You can choose to exit the script with a non-zero status code (1) here
+      exit 1
   else
       my_echo "\033[1;37m               \033[0;33m$vmssList                   \033[0m"
   fi
@@ -339,7 +378,6 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
       instanceId="${instanceInfo##*_}"
       publicIpAddress=$(az vmss list-instance-public-ips --resource-group $vmss_rg_name --name $vmssName --query "[?contains(id, '/$instanceId/')].ipAddress" --output tsv)
       
-      # Added this count down to ensure the Nginx server has been updated and applied to the VMSS to ensure the webserver is running.
       echo
       my_echo "\033[1;37m============================================================\033[0m"
       my_echo "\033[1;37m= Please wait for VMSS to finish updating and go online... =\033[0m"
@@ -349,7 +387,28 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
       if curl -k -s --head "https://$publicIpAddress" | grep "HTTP/1.1 200 OK\|HTTP/2 200"; then
           my_echo "\033[1;37mWebsite \033[0;33mhttps://$publicIpAddress \033[1;37m Website is reachable. Skipping countdown.\033[0m"
       else
-          countdown 20
+          check_https_status() {
+            local response
+            response=$(curl -sIk "https://$publicIpAddress" | grep "HTTP/1.1 200 OK\|HTTP/2 200")
+            if [ -n "$response" ]; then
+                return 0
+            else
+                return 1
+            fi
+          }
+          max_retries=10
+          sleep_interval=20
+          retry_count=0
+          while [ $retry_count -lt $max_retries ]; do
+              if check_https_status; then
+                  my_echo "\033[1;37mHTTPS HEAD request successful."
+                  break
+              else
+                  my_echo "\033[1;37mServer HTTPS is still being set up. Retrying in \033[0;33m$sleep_interval seconds...\033[1;37m"
+                  sleep $sleep_interval
+                  retry_count=$((retry_count + 1))
+              fi
+          done
       fi
       
       htmlContent=$(curl -k -s https://$publicIpAddress | grep -o '<title>.*</title>' | sed -e 's/<title>//;s/<\/title>//;s/<!.*>//g' | awk 'NF')
@@ -433,29 +492,36 @@ fi
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "kubernetes_cluster" ]; then
 
+  dynamically_generate_kubernetes_cluster_resource_values
+
+  az aks show --resource-group $aks_rg_name --name $aks_name --query 'id' --output tsv >/dev/null 2>&1
+
+  if [ $? -ne 0 ]; then
+    my_echo "\033[1;37m===============================================================\033[0m"
+    my_echo "\033[1;37m= No Azure Kubernetes Cluster resource found. Exiting script. =\033[0m"
+    my_echo "\033[1;37m===============================================================\033[0m"
+    exit 1
+  fi
+
   my_echo "\033[1;37m====================================================\033[0m"
   my_echo "\033[1;37m= Preparing to Deploy the Kubernetes Manifest File =\033[0m"
   my_echo "\033[1;37m====================================================\033[0m"
 
-  dynamically_generate_kubernetes_cluster_resource_values
-
-  if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ]; then
-    my_echo "\033[1;37m=====================================================================================================\033[0m"
-    my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
-    my_echo "\033[1;37m=====================================================================================================\033[0m"
-    exit 1
-  fi
-
-  if ! command -v kubectl &> /dev/null; then
+  if ! command_exists kubectl; then
       my_echo "\033[1;37m===========================================================\033[0m"
       my_echo "\033[1;37m= Error: 'kubectl' command not found. Installing kubectl. =\033[0m"
       my_echo "\033[1;37m===========================================================\033[0m"
   fi
 
 
-  az aks get-credentials --resource-group rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier --name akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier
+  if ! az aks get-credentials --resource-group $aks_rg_name --name $aks_name --overwrite-existing > /dev/null 2>&1; then
+    my_echo "\033[1;37m=======================================================================================================\033[0m"
+    my_echo "\033[1;37m= Error: Failed to get AKS credentials. Please check your Azure CLI configuration and resource names. =\033[0m"
+    my_echo "\033[1;37m=======================================================================================================\033[0m"
+    exit 1
+  fi
 
-  if ! kubectl get nodes -o wide; then
+  if ! kubectl get nodes; then
       my_echo "\033[1;37m===========================================\033[0m"
       my_echo "\033[1;37m= Error: Failed to get the list of nodes. =\033[0m"
       my_echo "\033[1;37m===========================================\033[0m"
@@ -474,11 +540,37 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   my_echo "\033[1;37m================================================================\033[0m"
   my_echo "\033[1;37m= Please wait for manifest service public ip to get allocated. =\033[0m"
   my_echo "\033[1;37m================================================================\033[0m"
-
-  countdown 25
-
   pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+  if curl -s --head "http://$pod_ip" | grep "HTTP/1.1 200 OK\|HTTP/2 200"; then
+      my_echo "\033[1;37mWebsite \033[0;33mhttp://$pod_ip \033[1;37m Website is reachable. Skipping countdown.\033[0m"
+  else
+      check_http_status() {
+        local response
+        response=$(curl -sI "http://$pod_ip" | grep "HTTP/1.1 200 OK\|HTTP/2 200")
+        if [ -n "$response" ]; then
+            return 0  # Success
+        else
+            return 1  # Failure
+        fi
+      }
+      retry_count=0
+      max_retries=10
+      sleep_interval=26
+      while [ $retry_count -lt $max_retries ]; do
+          if check_http_status; then
+              my_echo "\033[1;37mHTTP HEAD request successful.\033[0m"
+              break
+          else
+              my_echo "\033[1;37mHTTP Server is still being setup. Retrying in $sleep_interval seconds...\033[0m"
+              sleep $sleep_interval
+              retry_count=$((retry_count + 1))
+          fi
+      done
+      pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  fi
+
   my_echo "\033[1;37m======================================================================"
-  my_echo "\033[1;37m= Kubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m ="
+  my_echo "\033[1;37m    Kubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m"
   my_echo "\033[1;37m======================================================================"
 fi
