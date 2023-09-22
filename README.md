@@ -211,6 +211,7 @@ git clone https://github.com/DFW1N/SRE_Test.git
 
 **Install all software requirements or run the following commands to auto install on `Ubuntu/Debian`:**
 
+> **RECOMMENDED**
 ```bash
 sudo apt-get install make
 make --version
