@@ -192,21 +192,5 @@ resources = {
             sku = "18.04-LTS"
             version = "latest"
         }
-
-        windowsServer = {
-            osType = "Windows"
-            publisher = "MicrosoftWindowsServer"
-            offer = "WindowsServer"
-            sku = "2019-Datacenter"
-            version = "latest"
-        }
-
-        windowsDesktop = {
-            osType = "Windows"
-            publisher = "MicrosoftWindowsDesktop"
-            offer = "Windows-10"
-            sku = "21h1-ent"
-            version = "latest"
-        }
     }
 }

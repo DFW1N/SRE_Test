@@ -8,11 +8,15 @@ This repository has been created to deploy multiple resource types in Azure usin
 
 1. Create an auto scaling web server using a Virtual Machine Scale Set in Azure with a `Hello, World!` webpage using nginx with `Terraform` with a self assigned https certificate pushing traffic through https. 
 2. Use an `Ansible` playbook to update the webpage on the Virtual Machine Scale Set to update the webpage with `Hello, World from Ansible`.
-3. Use `Terraform` to deploy a Kubernetes cluster in Azure while serving an `Hello World` page, using an official, debian/ubuntu container.
+3. Use `Terraform` to deploy a Kubernetes cluster in Azure while serving an `Hello World` page that is available over the internet.
 
 ---
 
 ### **FAQ**
+> 👋 I'm here if you have any questions, just expand me!
+<details>
+  <summary>Click to expand Frequently Asked Questions (FAQ) </summary>
+
 
 - **Question:** Why doesn't this repository use CI/CD Pipelines at the moment?
   - **Answer:** This repository has been developed to showcase terraform code modules, with basic http web server deployments, to test a working CI/CD pipeline that would require the users deploying the repository would require active devops cloud agents running in a new repository. It would also depend on the preferred DevOps Platform used to execute the CI/CD deployments. Some may prefer, `Github`, `Jenkins`, `Gitlab` or `Azure DevOps`. This would be alot of time to develop multiple pipelines that support multiple DevOps platforms. This may also cause issues around having a pay wall requirements to get simple `terraform` modules deployed. The conclusion was to provide a fast user friendly method with no pay walls risks or lisencing requirements involved.
@@ -26,8 +30,15 @@ This repository has been created to deploy multiple resource types in Azure usin
 - **Question:** Can this repository modules be imported into DevOps Service Platforms?
   - **Answer:** Absoloutely, this repository is completely compatiable with all major DevOps Platform providers, given you have active agents to execute your pipeline tasks for you. It would be easy to implement just replicate the `bash` script tasks into a provider pipeline `.yml` file. All tasks are written in pure `bash` making it super easy to replicate into any CI/CD pipeline `.yml` file or deployment.
 
-- **Question**: Why not use a `powershell` script instead of `bash`?
+- **Question:** Why not use a `powershell` script instead of `bash`?
   - **Answer:** `Powershell` is much slower then bash and a lot of dependancies and modules to import to work. `Bash` is preffered when it comes to speed and efficency with almost no dependencies as majority of functions used come standard. However, it is possible to replicate the `bash` script written to work in `powershell`.
+
+- **Question:** Why are you not using `Azure Container Registry` for your `Kubernetes Cluster` deployment?
+  - **Answer:** The main reason is introducing custom built docker images for the demonstration purposes is not an requirement, but it would introduce alot more requirements for the end-user. Docker would have to be installed, while writing a custom `dockerfile`, tagging, building and pushing it to the `Azure Container Registry` is currently out of scope for the demonstration purposes of this repository.
+
+- **Question:** Why is there a `modules` directory and a `deployments` directory in `terraform/layers/` directory?
+  - **Answer:** The `modules` directory is used as a copy and paste templating into a solution which would have state independance per `deployment` directory, this allows for capabilities and resources to get created rapidly, user friendly and fast the modules are purely for developers to use if they want to build a custom solution and they know what modules they can ingest for resource deployments. For example if you want to deploy a Azure Serverless Function Application, you create a new directory find modules they are required to deliver that solution put it into the `deployment/serverless_function_app` and change the config to match and copy and paste the `modules` required. (Given they have been developed and would exist within the `modules` directory.)
+</details>
 
 ---
 
@@ -75,6 +86,18 @@ To ensure you have everything setup in your `Azure` subscription please review t
 2. [Create Azure Resource Group (Microsoft Community)](https://techcommunity.microsoft.com/t5/startups-at-microsoft/step-by-step-guide-creating-an-azure-resource-group-on-azure/ba-p/3792368)
 3. [Create Azure Strorage Account (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
 4. [Assign Azure Roles to Azure Identities (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal)
+
+#### Azure CLI Create Terraform Backend Resources (Manual)
+
+If you already have a service principal, with contributor access, you can create the required backend resources needed on `Azure` to store your `terraform.tfstate` files. You can run the commands below if you have `exported` your `Azure` service principal values required to authenticate using a service principal. Please review **#Deployment Guide:** **Step 1** to learn how to export required values from `linux` command line.
+
+**Azure CLI**
+```bash
+az group create --name $resourceGroupName --location australiaeast
+az storage account create --name $storageAccountName --resource-group $resourceGroupName --location australiaeast --sku Standard_LRS
+accountKey=$(az storage account keys list --resource-group $resourceGroupName --account-name $storageAccountName --query '[0].value' --output tsv)
+az storage container create --name tfstate --account-name $storageAccountName --account-key $accountKey --public-access off
+```
 
 ---
 
@@ -298,7 +321,7 @@ This section will be covering the infrastructure deployed for each deployment so
 
 ### Virtual Machine Scale Set:
 
-This diagram covers the infrastructure deployment for a autoscaling webserver hosted on an `Azure Virtual Machine Scale Set`, that has a self assigned `SSL` certificate.
+This diagram covers the infrastructure deployment for a autoscaling webserver using Nginx hosted on an `Azure Virtual Machine Scale Set`, that has a self assigned `SSL` certificate. This `Virtual Machine Scale Set` and its resources also use all three availability zones offered in `Azure`.
 
 ![Virtual Machine Scale Set Infrastructure Diagram](docs/infrastructure/diagrams/virtual_machine_scale_set_infrastructure_diagram.png)
 

@@ -1,11 +1,11 @@
+#!/bin/bash
+
 #============================================================================#
 #                                                                            #
 #                       Date Created: 19/09/2023                             #
 #                     Author: Sacha Roussakis-Notter                         #
 #                                                                            #
 # ===========================================================================#
-
-#!/bin/bash
 
 #############
 # VARIABLES #
@@ -17,18 +17,110 @@ scripts_directory="."
 build_directory="../terraform/layers/deployments/$1"
 dateTime=$(TZ=Australia/Brisbane date +"%FT%H:%M")
 ansible_user="adminuser"
+USE_ECHO_E=true
 
+declare -A region_prefixes=(
+  [australiaeast]="aue"
+  [australiacentral]="auc"
+  [australiacentral2]="ac2"
+  [australiasoutheast]="ase"
+  [centralus]="cus"
+  [eastus]="eus"
+  [eastus2]="eu2"
+  [westus]="wus"
+  [westus2]="wu2"
+  [westus3]="wu3"
+  [southcentralus]="scu"
+  [westcentralus]="wcu"
+  [northcentralus]="ncu"
+  [southeastasia]="sea"
+  [eastasia]="eaa"
+  [westeurope]="weu"
+  [northeurope]="noe"
+  [swedencentral]="swc"
+  [uksouth]="uks"
+  [ukwest]="ukw"
+  [southafricanorth]="san"
+  [southafricawest]="saw"
+  [centralindia]="cei"
+  [japaneast]="jae"
+  [japanwest]="jaw"
+  [koreacentral]="koc"
+  [koreasouth]="kos"
+  [canadacentral]="cac"
+  [francecentral]="frc"
+  [francesouth]="frs"
+  [germanywestcentral]="gwc"
+  [germanynorth]="gen"
+  [norwayeast]="nwe"
+  [norwaywest]="now"
+  [switzerlandnorth]="sln"
+  [switzerlandwest]="sww"
+  [brazilsouth]="brs"
+  [brazilsoutheast]="bse"
+  [jioindiawest]="jiw"
+  [jioindiacentral]="jic"
+  [southindia]="soi"
+  [westindia]="wei"
+  [canadaeast]="cae"
+  [uaenorth]="uan"
+  [uaecentral]="uac"
+  [centraluseuap]="cue"
+)
+
+declare -A region_vm_prefixes=(
+  [australiaeast]="ae"
+  [australiacentral]="ac"
+  [australiacentral2]="a2"
+  [australiasoutheast]="as"
+  [centralus]="cs"
+  [eastus]="es"
+  [eastus2]="e2"
+  [westus]="ws"
+  [westus2]="w2"
+  [westus3]="w3"
+  [southcentralus]="su"
+  [westcentralus]="wu"
+  [northcentralus]="nu"
+  [southeastasia]="sa"
+  [eastasia]="ea"
+  [westeurope]="we"
+  [northeurope]="ne"
+  [swedencentral]="sc"
+  [uksouth]="us"
+  [ukwest]="uw"
+  [southafricanorth]="sn"
+  [southafricawest]="sw"
+  [centralindia]="ci"
+  [japaneast]="je"
+  [japanwest]="jw"
+  [koreacentral]="kc"
+  [koreasouth]="ks"
+  [canadacentral]="cc"
+  [francecentral]="fc"
+  [francesouth]="fs"
+  [germanywestcentral]="gc"
+  [germanynorth]="gn"
+  [norwayeast]="we"
+  [norwaywest]="ww"
+  [switzerlandnorth]="sn"
+  [switzerlandwest]="sw"
+  [brazilsouth]="bs"
+  [brazilsoutheast]="be"
+  [jioindiawest]="ji"
+  [jioindiacentral]="jc"
+  [southindia]="si"
+  [westindia]="wi"
+  [canadaeast]="ce"
+  [uaenorth]="un"
+  [uaecentral]="uc"
+  [centraluseuap]="ce"
+)
 ###########################
 # START OF BASH FUNCTIONS #
 ###########################
 
 # These functions are being used through out the whole bash script.
-
-if [ "$SHELL" = "/bin/bash" ]; then
-    USE_ECHO_E=true
-else
-    USE_ECHO_E=false
-fi
 
 my_echo() {
     if [ "$USE_ECHO_E" = true ]; then
@@ -58,58 +150,106 @@ delete_deployment_files() {
 }
 
 dynamically_generate_kubernetes_cluster_resource_values() {
-  output=$(awk -v RS= -v block="kubernetes_cluster_1" '$0 ~ block' "terraform.tfvars" | \
-    awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
-    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > output.txt)
-  
-  aks_name_purpose=$(cat output.txt | sed -n '1p')
-  aks_name_identifier=$(cat output.txt | sed -n '2p')
-  aks_rg_purpose=$(cat output.txt | sed -n '3p')
-  aks_rg_identifier=$(cat output.txt | sed -n '4p')
-  # Dynically build Azure Kubernetes Cluster Resource Group name depending on multiple variabes and bash run-time input selections.
-  aks_rg_name="rg-$aks_rg_purpose-$environment_prefix-aue-$aks_rg_identifier"
-  aks_name="akc-$aks_name_purpose-$environment_prefix-aue-$aks_name_identifier"
+output=$(awk -v RS= -v block="kubernetes_cluster_1" '$0 ~ block' "terraform.tfvars" | \
+  awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+  sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > output.txt)
 
-  rm output.txt
+aks_name_purpose=$(cat output.txt | sed -n '1p')
+aks_name_identifier=$(cat output.txt | sed -n '2p')
+aks_rg_purpose=$(cat output.txt | sed -n '3p')
+aks_rg_identifier=$(cat output.txt | sed -n '4p')
 
-  if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ] || [ -z "$aks_rg_name" ] || [ -z "$aks_name" ]; then
-    my_echo "\033[1;37m=====================================================================================================\033[0m"
-    my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
-    my_echo "\033[1;37m=====================================================================================================\033[0m"
-    exit 1
-  fi
+rm output.txt
 
+if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ] || [ -z "$aks_rg_name" ]; then
+  my_echo "\033[1;37m=====================================================================================================\033[0m"
+  my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+  my_echo "\033[1;37m=====================================================================================================\033[0m"
+  exit 1
+fi
+
+# This is used to determine the `location prefix` used in the terraform code for the dynamic naming convention.
+aks_resource_groups_block=$(awk '/resource_groups = {/,/}/' terraform.tfvars)
+aks_resource_group_location=$(echo "$aks_resource_groups_block" | awk -F'"' '/location =/{print $2}')
+
+aks_block=$(grep -A999 "kubernetes_clusters = {" "terraform.tfvars")
+aks_location=$(echo "$aks_block" | awk -F'"' '/resource_group = {/{getline; print}' | awk -F'"' '/location =/{print $2}')
+
+aks_rg_location_prefix="${region_prefixes[$aks_resource_group_location]}"
+aks_name_location_prefix="${region_prefixes[$aks_location]}"
+
+if [ -z "$aks_rg_location_prefix" ] || [ -z "$aks_name_location_prefix" ]; then
+  my_echo "\033[1;37m=====================================================================================================\033[0m"
+  my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+  my_echo "\033[1;37m=====================================================================================================\033[0m"
+  exit 1
+fi
+
+# Dynically build Azure Kubernetes Cluster Resource Group name depending on multiple variabes and bash run-time input selections.
+aks_rg_name="rg-$aks_rg_purpose-$environment_prefix-$aks_rg_location_prefix-$aks_rg_identifier"
+aks_name="akc-$aks_name_purpose-$environment_prefix-$aks_name_location_prefix-$aks_name_identifier"
+if [ -z "$aks_rg_name" ] || [ -z "$aks_rg_name" ]; then
+  my_echo "\033[1;37m====================================================\033[0m"
+  my_echo "\033[1;37m= Kubernetes Cluster Resource Group: Name not set. =\033[0m"
+  my_echo "\033[1;37m====================================================\033[0m"
+  exit 1
+fi
 }
 
 dynamically_generate_virtual_machine_resource_values() {
-  output=$(awk -v RS= -v block="linux_scale_set_1" '$0 ~ block' "terraform.tfvars" | \
-    awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
-    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > vmss_name_output.txt)
+output=$(awk -v RS= -v block="linux_scale_set_1" '$0 ~ block' "terraform.tfvars" | \
+  awk '/name = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+  sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > vmss_name_output.txt)
 
-  vmss_name_purpose=$(cat vmss_name_output.txt | sed -n '1p')
-  vmss_name_identifier=$(cat vmss_name_output.txt | sed -n '2p')
+vmss_name_purpose=$(cat vmss_name_output.txt | sed -n '1p')
+vmss_name_identifier=$(cat vmss_name_output.txt | sed -n '2p')
 
-  rm vmss_name_output.txt
+rm vmss_name_output.txt
 
-  resource_group_output=$(awk -v RS= -v block="linux_scale_set_1" '$0 ~ block' "terraform.tfvars" | \
-      awk '/resource_group = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
-      sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > resource_group_output.txt)
+resource_group_output=$(awk -v RS= -v block="linux_scale_set_1" '$0 ~ block' "terraform.tfvars" | \
+    awk '/resource_group = {/,/identifier =/ {gsub(/"/, "", $3); print $3}' | \
+    sed 's/{//' | sed 's/}//' | sed '/^[[:space:]]*$/d' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' > resource_group_output.txt)
 
-  vmss_rg_location=$(cat resource_group_output.txt | sed -n '1p')
-  vmss_rg_purpose=$(cat resource_group_output.txt | sed -n '2p')
-  vmss_rg_identifier=$(cat resource_group_output.txt | sed -n '3p')
-  # Dynically build Azure Virtual Machine Scale Set Resource Group name depending on multiple variabes and bash run-time input selections.
-  vmss_rg_name="rg-$vmss_rg_purpose-$environment_prefix-aue-$vmss_rg_identifier"
+vmss_rg_location=$(cat resource_group_output.txt | sed -n '1p')
+vmss_rg_purpose=$(cat resource_group_output.txt | sed -n '2p')
+vmss_rg_identifier=$(cat resource_group_output.txt | sed -n '3p')
 
-  rm resource_group_output.txt
+rm resource_group_output.txt
 
-  if [ -z "$vmss_name_purpose" ] || [ -z "$vmss_name_identifier" ] || [ -z "$vmss_rg_location" ] || [ -z "$vmss_rg_purpose" ] || [ -z "$vmss_rg_identifier" ] || [ -z "$vmss_rg_name" ]; then
-    my_echo "\033[1;37m=====================================================================================================\033[0m"
-    my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
-    my_echo "\033[1;37m=====================================================================================================\033[0m"
-    exit 1
-  fi
+if [ -z "$vmss_name_purpose" ] || [ -z "$vmss_name_identifier" ] || [ -z "$vmss_rg_location" ] || [ -z "$vmss_rg_purpose" ] || [ -z "$vmss_rg_identifier" ]; then
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
+  my_echo "\033[1;37m= Block 1: Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
+  exit 1
+fi
 
+# This is used to determine the `location prefix` used in the terraform code for the dynamic naming convention.
+vmss_resource_groups_block=$(awk '/resource_groups = {/,/}/' terraform.tfvars)
+vmss_resource_group_location=$(echo "$vmss_resource_groups_block" | awk -F'"' '/location =/{print $2}')
+
+vmss_block=$(grep -A999 "linux_virtual_machine_scale_sets = {" "terraform.tfvars")
+vmss_location=$(echo "$vmss_block" | awk -F'"' '/resource_group = {/{getline; print}' | awk -F'"' '/location =/{print $2}')
+
+vmss_rg_location_prefix="${region_prefixes[$vmss_resource_group_location]}"
+vmss_name_location_prefix="${region_prefixes[$vmss_location]}"
+vmss_name_vm_prefix="${region_vm_prefixes[$vmss_location]}"
+
+if [ -z "$vmss_rg_location_prefix" ] || [ -z "$vmss_name_location_prefix" ] || [ -z "$vmss_name_vm_prefix" ]; then
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
+  my_echo "\033[1;37m= Block 2: Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
+  exit 1
+fi
+
+# Dynically build Azure Virtual Machine Scale Set Resource Group name depending on multiple variabes and bash run-time input selections.
+vmss_rg_name="rg-$vmss_rg_purpose-$environment_prefix-$vmss_rg_location_prefix-$vmss_rg_identifier"
+
+if [ -z "$vmss_rg_name" ]; then
+  my_echo "\033[1;37m=================================================\033[0m"
+  my_echo "\033[1;37m= Virtual Machine Resource Group: Name not set. =\033[0m"
+  my_echo "\033[1;37m=================================================\033[0m"
+  exit 1
+fi
 }
 
 
@@ -183,7 +323,7 @@ fi
 # START OF BASH SCRIPT AFTER EXPRESSIONAL CHECKS #
 ##################################################
 
-az login --service-principal --username "$ARM_CLIENT_ID" --password "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
+az login --service-principal --username "$ARM_CLIENT_ID" --password "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" --output none
 
 if [ $? -ne 0 ]; then
   my_echo "\033[1;37m===============================================================================\033[0m"
@@ -192,7 +332,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-az account set --subscription "$ARM_SUBSCRIPTION_ID"
+az account set --subscription "$ARM_SUBSCRIPTION_ID" --output none
 
 if [ $? -ne 0 ]; then
   my_echo "\033[1;37m============================================================================\033[0m"
@@ -304,6 +444,7 @@ fi
 
 ssh_key=$(cat "$ssh_pub_key_file")
 
+if [ "$deploy_terraform_apply" = false ]; then
 terraform plan $deploy_suffix \
   -var="environment=$environment_prefix" \
   -var="managedBy=$managed_by" \
@@ -313,11 +454,16 @@ terraform plan $deploy_suffix \
   -var-file=resources.tfvars \
   -out=$1-$environment_prefix-plan.out
 
-if [ $? -ne 0 ]; then
-  my_echo "\033[1;37m======================================================\033[0m"
-  my_echo "\033[1;37m= Error: Terraform plan failed. Aborting deployment. =\033[0m"
-  my_echo "\033[1;37m======================================================\033[0m"
-  exit 1
+  if [ $? -ne 0 ]; then
+    my_echo "\033[1;37m======================================================\033[0m"
+    my_echo "\033[1;37m= Error: Terraform plan failed. Aborting deployment. =\033[0m"
+    my_echo "\033[1;37m======================================================\033[0m"
+    exit 1
+  fi
+else
+  my_echo "\033[1;37m===============================================================\033[0m"
+  my_echo "\033[1;37m= Terraform plan is skipped as -plan option was not provided. =\033[0m"
+  my_echo "\033[1;37m===============================================================\033[0m"
 fi
 
 if [ "$deploy_terraform_apply" = true ]; then
@@ -330,20 +476,24 @@ if [ "$deploy_terraform_apply" = true ]; then
     -var-file=resources.tfvars \
     -auto-approve
 
+  rm -f "$1-$environment_prefix-plan.out"
+  delete_deployment_files
+
   if [ $? -ne 0 ]; then
     my_echo "\033[1;37m===========================================================\033[0m"
     my_echo "\033[1;37m= Error: Terraform apply failed. Deployment unsuccessful. =\033[0m"
     my_echo "\033[1;37m===========================================================\033[0m"
+    rm -f "$1-$environment_prefix-plan.out"
+    delete_deployment_files
     exit 1
   fi
 else
   my_echo "\033[1;37m============================================================\033[0m"
   my_echo "\033[1;37m= Terraform apply is skipped as -plan option was provided. =\033[0m"
   my_echo "\033[1;37m============================================================\033[0m"
+  rm -f "$1-$environment_prefix-plan.out"
+  delete_deployment_files
 fi
-
-rm -f "$1-$environment_prefix-plan.out"
-delete_deployment_files
 
 if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [ "$1" = "virtual_machine" ]; then
 
@@ -438,7 +588,11 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   # Ansible Section of the Bash Script #
   ######################################
 
-  read -p "Do you want to update nginx webpage with an Ansible playbook (y/n)? " answer
+  if echo "$htmlContent" | grep -q "Hello, World from Ansible"; then
+    my_echo "\033[1;37mYou have already deployed the ansible playbook to: \033[0;33mhttps://$publicIpAddress\033[0m"
+  else
+    read -p "Do you want to update nginx webpage with an Ansible playbook (y/n)? " answer
+  fi
 
   # Check if the user's response is not one of the accepted values
   if [ "$answer" != "yes" ] && [ "$answer" != "y" ] && [ "$answer" != "ye" ] && [ "$answer" != "ya" ]; then
@@ -467,10 +621,9 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   cd ../../../../ansible/playbooks
   PYTHONWARNINGS="ignore" ansible-playbook -i ../inventory/hosts.ini update_nginx.yml
   if [ $? -ne 0 ]; then
-      my_echo "\033[1;37m======================================\033[0m"
-      my_echo "\033[1;37m= Ansible playbook execution failed. =\033[0m"
-      my_echo "\033[1;37m======================================\033[0m"
-      exit 1
+      my_echo "\033[1;37m=======================================================================\033[0m"
+      my_echo "\033[1;37m= Ansible playbook execution failed please check your hosts.ini file. =\033[0m"
+      my_echo "\033[1;37m=======================================================================\033[0m"
   else
       my_echo "\033[1;37m===========================================\033[0m"
       my_echo "\033[1;37m= Ansible playbook executed successfully. =\033[0m"
