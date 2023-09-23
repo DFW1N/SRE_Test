@@ -288,7 +288,7 @@ Save the changes in the directory `scripts/config.yml` then continue to **step 3
 **Working Directory** `scripts/`
 ```bash
 chmod 700 azure_manual_deployment.sh
-./azure_manual_deployment.sh <input_value> <environment_prefix>
+./azure_manual_deployment.sh virtual_machine uat
 ```
 > NOTE: Please review the options below to understand what to put in for `<input_value>`, `<environment_prefix>` and other options you have.
 
