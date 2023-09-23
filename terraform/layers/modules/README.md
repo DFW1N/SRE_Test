@@ -1,1 +1,1 @@
-This folder holds all the modules that will be using code from the `/main/` directory to pass parameters into it to deploy the infrastructure.
+This folder holds all the modules that will be using code from the `/main/` directory to pass parameters into it to deploy the infrastructure. These should be copied to the deployments/ directory to build rapid infrastructure.
