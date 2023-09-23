@@ -161,10 +161,10 @@ aks_rg_identifier=$(cat output.txt | sed -n '4p')
 
 rm output.txt
 
-if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ] || [ -z "$aks_rg_name" ]; then
-  my_echo "\033[1;37m=====================================================================================================\033[0m"
-  my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
-  my_echo "\033[1;37m=====================================================================================================\033[0m"
+if [ -z "$aks_name_purpose" ] || [ -z "$aks_name_identifier" ] || [ -z "$aks_rg_purpose" ] || [ -z "$aks_rg_identifier" ]; then
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
+  my_echo "\033[1;37m= Block 1: Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
   exit 1
 fi
 
@@ -179,9 +179,9 @@ aks_rg_location_prefix="${region_prefixes[$aks_resource_group_location]}"
 aks_name_location_prefix="${region_prefixes[$aks_location]}"
 
 if [ -z "$aks_rg_location_prefix" ] || [ -z "$aks_name_location_prefix" ]; then
-  my_echo "\033[1;37m=====================================================================================================\033[0m"
-  my_echo "\033[1;37m= Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
-  my_echo "\033[1;37m=====================================================================================================\033[0m"
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
+  my_echo "\033[1;37m= Block 2: Naming convention variables have not been set in the previous task please review the bash script. =\033[0m"
+  my_echo "\033[1;37m==============================================================================================================\033[0m"
   exit 1
 fi
 
@@ -700,7 +700,7 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
   else
       check_http_status() {
         local response
-        response=$(curl -sI "http://$pod_ip" | grep "HTTP/1.1 200 OK\|HTTP/2 200")
+        response=$(curl -sI "http://$pod_ip" | grep "HTTP/1.1 200 OK")
         if [ -n "$response" ]; then
             return 0  # Success
         else
@@ -715,15 +715,15 @@ if [ "$deploy_terraform_apply" = true ] && [ "$destroy_terraform" = false ] && [
               my_echo "\033[1;37mHTTP HEAD request successful.\033[0m"
               break
           else
-              my_echo "\033[1;37mHTTP Server is still being setup. Retrying in $sleep_interval seconds...\033[0m"
+              my_echo "\033[1;37mHTTP Server \033[0;33m$pod_ip \033[1;37mis still being setup. Retrying in $sleep_interval seconds...\033[0m"
               sleep $sleep_interval
               retry_count=$((retry_count + 1))
+              pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           fi
       done
-      pod_ip=$(kubectl get svc nginx-hello-world -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   fi
 
-  my_echo "\033[1;37m======================================================================"
+  my_echo "\033[1;37m===================================================================="
   my_echo "\033[1;37m    Kubernetes Pod Nginx Server is Live at: \033[0;33mhttp://$pod_ip\033[0m"
-  my_echo "\033[1;37m======================================================================"
+  my_echo "\033[1;37m===================================================================="
 fi

@@ -12,7 +12,7 @@ main = {
     #####################
 
     resource_groups = {
-        example_1 = {
+        sre_aks_resource_group = {
             location = "australiaeast"
             purpose = "sre"
             identifier = "aks"

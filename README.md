@@ -34,10 +34,13 @@ This repository has been created to deploy multiple resource types in Azure usin
   - **Answer:** `Powershell` is much slower then bash and a lot of dependancies and modules to import to work. `Bash` is preffered when it comes to speed and efficency with almost no dependencies as majority of functions used come standard. However, it is possible to replicate the `bash` script written to work in `powershell`.
 
 - **Question:** Why are you not using `Azure Container Registry` for your `Kubernetes Cluster` deployment?
-  - **Answer:** The main reason is introducing custom built docker images for the demonstration purposes is not an requirement, but it would introduce alot more requirements for the end-user. Docker would have to be installed, while writing a custom `dockerfile`, tagging, building and pushing it to the `Azure Container Registry` is currently out of scope for the demonstration purposes of this repository.
+  - **Answer:** The main reason is introducing custom built docker images for the demonstration purposes is not an requirement, but it would introduce alot more requirements for the end-user. Docker would have to be installed, while writing a custom `dockerfile`, tagging, building and pushing it to the `Azure Container Registry` is currently out of scope for the demonstration purposes of this repository. Thats why we are just pulling an` official nginx` docker image.
 
 - **Question:** Why is there a `modules` directory and a `deployments` directory in `terraform/layers/` directory?
   - **Answer:** The `modules` directory is used as a copy and paste templating into a solution which would have state independance per `deployment` directory, this allows for capabilities and resources to get created rapidly, user friendly and fast the modules are purely for developers to use if they want to build a custom solution and they know what modules they can ingest for resource deployments. For example if you want to deploy a Azure Serverless Function Application, you create a new directory find modules they are required to deliver that solution put it into the `deployment/serverless_function_app` and change the config to match and copy and paste the `modules` required. (Given they have been developed and would exist within the `modules` directory.)
+
+- **Question:** Why are you using an `Azure Storage Account` to store the `terraform.tfstate` files?
+  - **Answer:** Storing the sensitive files locally can be a security risk, since it is not encrypted, and everything is in plain text, it is extremely bad practice to store it locally, `Azure Storage Account` was chosen since that is the cloud environment we are using and it is a secure method if you setup `RBAC` access to the storage account. This also allows you to create a folder directory structure inside your container that allows you split the state files in the container. You can also enable container blob versioning giving you backups of your `terraform.tfstate` if they ever go corrupt providing a high level or redundancy to your IaC.
 </details>
 
 ---
@@ -97,6 +100,15 @@ az group create --name $resourceGroupName --location australiaeast
 az storage account create --name $storageAccountName --resource-group $resourceGroupName --location australiaeast --sku Standard_LRS
 accountKey=$(az storage account keys list --resource-group $resourceGroupName --account-name $storageAccountName --query '[0].value' --output tsv)
 az storage container create --name tfstate --account-name $storageAccountName --account-key $accountKey --public-access off
+```
+
+**Enable blob versioning on your storage account.**
+
+```bash
+az storage account blob-service-properties update \
+    --resource-group <resource_group> \
+    --account-name <storage-account> \
+    --enable-versioning true
 ```
 
 ---
@@ -199,7 +211,6 @@ The repository uses a `shell` script to automate everything therefore `Linux` is
 - ✅ Successful Deployment: **Ubuntu 22.04**
 
 `Unix Shell`
-- ✅ Successful Deployment: **Zsh**
 - ✅ Successful Deployment: **Bash**
 
 ## **Deployment Guide**
@@ -521,6 +532,8 @@ Reference: [Code Block Shown Above](https://docs.ansible.com/ansible/latest/coll
 8. [Nginx Official Container Images](https://hub.docker.com/_/nginx/)
 9. [Ansible Galaxy Collection for Windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_domain_membership_module.html)
 10. [OpenSSL Essentials for Self Signed Certificates](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs)
+11. [Azure Storage Account Container Versioning](https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-overview)
+12. [Azure Blob Versioning](https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable?tabs=azure-cli)
 
 ---
 
