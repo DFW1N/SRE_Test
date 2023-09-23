@@ -113,16 +113,6 @@ az storage account blob-service-properties update \
 
 ---
 
-### Guides for Azure Kubernetes Setup
-
-#### **Azure CLI to Install Kubectl**
-
-```bash
-sudo az aks install-cli
-```
-
----
-
 ### Installation Guides
 
 If you prefer you can automatically install all software requirements, everything using the `makefile`. Simply run the following commands:
@@ -131,6 +121,17 @@ If you prefer you can automatically install all software requirements, everythin
 sudo apt-get install make
 make --version
 sudo make install-all
+```
+
+<details>
+  <summary>Click to expand for manually installing via command line (FAQ) </summary>
+
+### Guides for Azure Kubernetes Setup
+
+#### **Azure CLI to Install Kubectl**
+
+```bash
+sudo az aks install-cli
 ```
 
 `Ubuntu/Debian`
@@ -196,6 +197,8 @@ sudo apt update -y
 sudo apt install git -y
 git --version
 ```
+
+</details>
 
 ---
 
