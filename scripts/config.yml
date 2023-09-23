@@ -9,8 +9,8 @@
 
 Terraform:
   Backend:
-    storage_account_name: 'azrustdvsec68b3'
-    resource_group_name: 'azr-u-tc-dv-rg-tf-001'
+    storage_account_name: 'example-storage-account-name'
+    resource_group_name: 'example-resource-group-name'
     container_name: 'tfstate'
   Modules:
     Variables:
