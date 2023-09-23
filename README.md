@@ -8,7 +8,7 @@ This repository has been created to deploy multiple resource types in Azure usin
 
 1. Create an auto scaling web server using a Virtual Machine Scale Set in Azure with a `Hello, World!` webpage using nginx with `Terraform` with a self assigned https certificate pushing traffic through https. 
 2. Use an `Ansible` playbook to update the webpage on the Virtual Machine Scale Set to update the webpage with `Hello, World from Ansible`.
-3. Use `Terraform` to deploy a Kubernetes cluster in Azure while serving an `Hello World` page that is available over the internet.
+3. Use `Terraform` to deploy a Kubernetes cluster in Azure while serving the generic official nginx docker image page that is available over the internet.
 
 ---
 
