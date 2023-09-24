@@ -243,7 +243,7 @@ export ARM_TENANT_ID="YourAzureADTenantId"
 
 **Clone the Repository**
 ```bash
-git clone https://github.com/DFW1N/SRE_Test.git
+git clone https://github.com/DFW1N/SRE_Test.git && cd SRE_Test
 ```
 
 **Install all software requirements or run the following commands to auto install on `Ubuntu/Debian`:**
