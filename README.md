@@ -45,6 +45,27 @@ This repository has been created to deploy multiple resource types in Azure usin
 
 ---
 
+### **Troubleshooting**
+> 👋 I'm here if you have errors or questions, just expand me!
+<details>
+  <summary>Click to expand Frequently Asked Questions (FAQ) </summary>
+
+If you are running this, and you are getting some errors may be permisison related or other please review common errors below and how to set them.
+
+- **Question:** I'm doing my `export` commands and when i run the script it is saying they have not been set?
+   - **Answer:** When you set environment variables using the export command within a script, those variables are typically only available within the scope of that script and its child processes. If you use sudo to run the script, it might not have access to those environment variables because sudo starts a new shell session, and environment variables set within your script won't automatically be inherited. To resolve this issue try running the script with 
+   ```bash 
+   sudo -E ./azure_manual_ deployment.sh virtual_machine dev -plan
+   ``` 
+   When running a script with sudo, you can use the -E option to preserve your environment, including the variables you've set.
+
+- **Question:** It does not have the relevant permissions?
+   - **Answer:** You can try give the script additional permissions same as the user this can be achieved by running `sudo chmod +x` instead f `sudo chmod +x 700`. chmod +x is used to add execute permission to a file without changing other permissions, while chmod 700 sets specific permissions to make a file readable, writable, and executable only by the owner, with no access for others.
+
+
+</details>
+---
+
 ## **Pre-requisites**
 
 This repository requires some pre-requisites on the system you will be executing it on please ensure you have the following tools/applications installed.
@@ -258,7 +279,7 @@ sudo make install-all
 **Change directory into the `scripts/` directory to edit the config file and run the shell script from.**
 
 ```bash
-cd SRE_Test/scripts
+cd scripts
 ```
 
 **Edit the Config File**
