@@ -17,7 +17,7 @@ main = {
             purpose = "sre"
             identifier = "aks"
             tags = {
-                owner = "sacha1777@hotmail.com"
+                owner = "xxxx@hotmail.com"
                 role = "This resource group is the default config for the module when it is not edited."
             }
         }
