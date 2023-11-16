@@ -59,7 +59,7 @@ main = {
                 role_based_access_control_enabled = true
             }
             tags = {
-                owner = "sacha1777@hotmail.com"
+                owner = "xxxx@hotmail.com"
                 role = "This azure kubernetes cluster is the default configuration settings for this module."
                 }
             }
